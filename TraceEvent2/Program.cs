@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Collections;
 
 using Gnu.Getopt;
 using NDesk.Options;
@@ -26,6 +27,13 @@ namespace TraceEvent2
         static List<string> logFileList = new List<string>();
         static List<string> providerNameList = new List<string>();
 
+        static int dataCollectTime = 0;
+
+        static string sessionName = "apt_session";
+        static string etlFileName = "output.etl";
+
+        static TraceEventSession session = new TraceEventSession(sessionName);
+
         static void Main(string[] args)
         {
             // Parse CommandLine Arguments
@@ -33,8 +41,11 @@ namespace TraceEvent2
             var commandLineParser = new OptionSet()
             {
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
-                {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
                 {"o|output=", "The output file path.", outputPath => setDataOut(outputPath)},
+                {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
+                // set up etlFileName
+                // set up wether to compress etl file
+                {"t|collectTime=", "The time of collect data.", time => dataCollectTime = int.Parse(time) },
                 {"h|help", "Show help information.", v => show_help = v != null}
             };
 
@@ -50,10 +61,29 @@ namespace TraceEvent2
             }
             if (show_help) ShowHelp(commandLineParser);
 
-            // Start Parse Events, if there exit
-            if(logFileList.Count() != 0)
+#if DEBUG
+            Debugger.Break();
+#endif
+
+            // Start Parse Events, if there exist logfile parameter
+            if (logFileList.Count() != 0)
             {
                 ParseLogFile();
+            }
+            // or log file
+            else if(providerNameList.Count() != 0)
+            {
+                Out.WriteLine("Ctrl + c to stop collection!");
+                Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) { session.Dispose(); };
+                if (dataCollectTime != 0)
+                {
+                    var timer = new Timer(delegate (object state)
+                    {
+                        Out.WriteLine("Stopped after {0} sec", dataCollectTime);
+                        session.Source.StopProcessing();
+                    }, null, dataCollectTime * 1000, Timeout.Infinite);
+                }
+                CollectLogFile();
             }
 
 #if DEBUG
@@ -109,15 +139,39 @@ namespace TraceEvent2
             }
         }
 
-        static void Print(TraceEvent data)
+        public static void CollectLogFile()
+        {
+            if (TraceEventSession.IsElevated() != true)
+            {
+                Out.WriteLine("Must be elevated (Admin) to run this program.");
+                Debugger.Break();
+                return;
+            }
+            session.Dispose();
+            session = new TraceEventSession("apt_session", etlFileName);
+
+            foreach (var provider in providerNameList)
+            {
+                session.EnableProvider(provider, TraceEventLevel.Always);
+            }
+            if (dataCollectTime == 0) Thread.Sleep(int.MaxValue);
+            else Thread.Sleep(dataCollectTime * 1000);
+        }
+
+        private static void Print(TraceEvent data)
         {
             // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
             if (data.Opcode == TraceEventOpcode.DataCollectionStart)
                 return;
 
+            //Out.WriteLine(data.ToXml(new StringBuilder()).ToString());
             dataOut.WriteLine(data.ToString());
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
         }
+
+        // statistic
+
+ 
     }
 }
