@@ -70,4 +70,12 @@ namespace TraceEvent2
             return info.ToString();
         }
     }
+
+    class ALPCAnalysis
+    {
+        public static void ProcessALPC(TraceEvent data)
+        {
+            data.PayloadByName("MessgeID");
+        }
+    }
 }

@@ -41,7 +41,7 @@ namespace TraceEvent2
             var commandLineParser = new OptionSet()
             {
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
-                {"o|output=", "The output file path.", outputPath => setDataOut(outputPath)},
+                {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
                 // set up etlFileName
                 // set up wether to compress etl file
@@ -104,7 +104,7 @@ namespace TraceEvent2
             TraceAnalysis.PrintStatisticInfo();
         }
 
-        private static void setDataOut(string outputPath)
+        private static void SetDataOut(string outputPath)
         {
             try
             {
@@ -130,6 +130,9 @@ namespace TraceEvent2
                         // Set up callbacks to 
                         source.Clr.All += ProcessData;
                         source.Kernel.All += ProcessData;
+
+                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPC;
+                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPC;
 
                         var symbolParser = new RegisteredTraceEventParser(source);
                         symbolParser.All += ProcessData;
