@@ -95,6 +95,9 @@ namespace TraceEvent2
                         source.Clr.All += Print;
                         source.Kernel.All += Print;
 
+                        var symbolParser = new RegisteredTraceEventParser(source);
+                        symbolParser.All += Print;
+
                         source.Process();
                         Out.WriteLine("Done Processing.");
                     }
