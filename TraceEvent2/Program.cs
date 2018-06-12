@@ -164,11 +164,15 @@ namespace TraceEvent2
             else Thread.Sleep(dataCollectTime * 1000);
         }
 
+        public delegate void ProcessDataDel(TraceEvent data);
+
         private static void ProcessData(TraceEvent data)
         {
+            ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
             //Print(data);
             //TraceAnalysis.Statistic(data);
-            TraceAnalysis.PrintPickupInfo(data);
+
+            processer(data);
         }
 
         private static void Print(TraceEvent data)
