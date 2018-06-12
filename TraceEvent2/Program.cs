@@ -95,9 +95,6 @@ namespace TraceEvent2
                         source.Clr.All += Print;
                         source.Kernel.All += Print;
 
-                        var symbolParser = new RegisteredTraceEventParser(source);
-                        symbolParser.All += Print;
-
                         source.Process();
                         Out.WriteLine("Done Processing.");
                     }
@@ -109,7 +106,7 @@ namespace TraceEvent2
             }
         }
 
-            static void Print(TraceEvent data)
+        static void Print(TraceEvent data)
         {
             // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
             if (data.Opcode == TraceEventOpcode.DataCollectionStart)

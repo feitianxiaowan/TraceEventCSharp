@@ -4,6 +4,6 @@
     <StartArguments>--logfile=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\kernel.etl --output=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\kernel.txt</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <StartArguments>--logfile=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\output.etl--output=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\kernel.txt</StartArguments>
+    <StartArguments>--logfile=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\output.etl --output=C:\Users\xiaowan\Desktop\TraceEventCSharp\TraceEvent2\Logfiles\kernel.txt</StartArguments>
   </PropertyGroup>
 </Project>

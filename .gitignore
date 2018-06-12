@@ -5,8 +5,6 @@ TraceEvent2/bin/
 
 TraceEvent2/obj/
 
-TraceEvent2/Properties/
-
 packages/
 *.etl
 *.bk
