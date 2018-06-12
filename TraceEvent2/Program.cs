@@ -86,6 +86,7 @@ namespace TraceEvent2
                 CollectLogFile();
             }
 
+            WindUp();
 #if DEBUG
             Debugger.Break();
 #endif
@@ -96,6 +97,11 @@ namespace TraceEvent2
         {
             Out.WriteLine("Usage:");
             p.WriteOptionDescriptions(Out);
+        }
+
+        private static void WindUp()
+        {
+            PrintStatisticInfo();
         }
 
         private static void setDataOut(string outputPath)
@@ -168,10 +174,44 @@ namespace TraceEvent2
             dataOut.WriteLine(data.ToString());
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
+
+            Statistic(data);
         }
 
         // statistic
+        private static Dictionary<string, Dictionary<int, int>> eventPerProviderPerProcess = new Dictionary<string, Dictionary<int, int>>();
 
- 
+        private static void Statistic(TraceEvent data)
+        {
+            if (eventPerProviderPerProcess.ContainsKey(data.ProviderName))
+            {
+                if (eventPerProviderPerProcess[data.ProviderName].ContainsKey(data.ProcessID))
+                {
+                    eventPerProviderPerProcess[data.ProviderName][data.ProcessID] += 1;
+                }
+                else
+                {
+                    eventPerProviderPerProcess[data.ProviderName].Add(data.ProcessID, 1);
+                }
+            }
+            else
+            {
+                eventPerProviderPerProcess.Add(data.ProviderName, new Dictionary<int, int>());
+                eventPerProviderPerProcess[data.ProviderName].Add(data.ProcessID, 1);
+            }
+        }
+
+        private static void PrintStatisticInfo()
+        {
+            foreach(var iter in eventPerProviderPerProcess)
+            {
+                logOut.Write(iter.Key + ",");
+                foreach(var iter2 in iter.Value)
+                {
+                    logOut.Write(iter2.Key + "," + iter2.Value);
+                }
+                logOut.WriteLine();
+            }
+        }
     }
 }
