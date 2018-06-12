@@ -101,7 +101,7 @@ namespace TraceEvent2
 
         private static void WindUp()
         {
-            PrintStatisticInfo();
+            TraceAnalysis.PrintStatisticInfo();
         }
 
         private static void setDataOut(string outputPath)
@@ -128,11 +128,11 @@ namespace TraceEvent2
                             Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
 
                         // Set up callbacks to 
-                        source.Clr.All += Print;
-                        source.Kernel.All += Print;
+                        source.Clr.All += ProcessData;
+                        source.Kernel.All += ProcessData;
 
                         var symbolParser = new RegisteredTraceEventParser(source);
-                        symbolParser.All += Print;
+                        symbolParser.All += ProcessData;
 
                         source.Process();
                         Out.WriteLine("Done Processing.");
@@ -164,6 +164,13 @@ namespace TraceEvent2
             else Thread.Sleep(dataCollectTime * 1000);
         }
 
+        private static void ProcessData(TraceEvent data)
+        {
+            //Print(data);
+            //TraceAnalysis.Statistic(data);
+            TraceAnalysis.PrintPickupInfo(data);
+        }
+
         private static void Print(TraceEvent data)
         {
             // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
@@ -174,44 +181,8 @@ namespace TraceEvent2
             dataOut.WriteLine(data.ToString());
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
-
-            Statistic(data);
         }
 
-        // statistic
-        private static Dictionary<string, Dictionary<int, int>> eventPerProviderPerProcess = new Dictionary<string, Dictionary<int, int>>();
 
-        private static void Statistic(TraceEvent data)
-        {
-            if (eventPerProviderPerProcess.ContainsKey(data.ProviderName))
-            {
-                if (eventPerProviderPerProcess[data.ProviderName].ContainsKey(data.ProcessID))
-                {
-                    eventPerProviderPerProcess[data.ProviderName][data.ProcessID] += 1;
-                }
-                else
-                {
-                    eventPerProviderPerProcess[data.ProviderName].Add(data.ProcessID, 1);
-                }
-            }
-            else
-            {
-                eventPerProviderPerProcess.Add(data.ProviderName, new Dictionary<int, int>());
-                eventPerProviderPerProcess[data.ProviderName].Add(data.ProcessID, 1);
-            }
-        }
-
-        private static void PrintStatisticInfo()
-        {
-            foreach(var iter in eventPerProviderPerProcess)
-            {
-                logOut.Write(iter.Key + ",");
-                foreach(var iter2 in iter.Value)
-                {
-                    logOut.Write(iter2.Key + "," + iter2.Value);
-                }
-                logOut.WriteLine();
-            }
-        }
     }
 }
