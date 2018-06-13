@@ -171,8 +171,8 @@ namespace TraceEvent2
 
         private static void ProcessData(TraceEvent data)
         {
-            ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
-            //Print(data);
+            //ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
+            ProcessDataDel processer = Print;
             //TraceAnalysis.Statistic(data);
 
             processer(data);
