@@ -9,6 +9,8 @@ using Microsoft.Diagnostics.Tracing;
 
 namespace TraceEvent2
 {
+
+
     class TraceAnalysis
     {
         public static TextWriter logOut = Console.Out;
@@ -71,11 +73,61 @@ namespace TraceEvent2
         }
     }
 
+
     class ALPCAnalysis
     {
-        public static void ProcessALPC(TraceEvent data)
+        private static StreamWriter alpcOutStream = new StreamWriter(new FileStream("alpc.dot", FileMode.OpenOrCreate, FileAccess.ReadWrite));
+
+        private static HashSet<int> outputProcess = new HashSet<int>();
+        private static HashSet<int> targetProcessList = new HashSet<int>();
+        private static Dictionary<int, int> messageidToPid = new Dictionary<int, int>();
+
+        static int edge_count = 0;
+        public static void ProcessALPCSend(TraceEvent data)
         {
-            data.PayloadByName("MessgeID");
+            int messageId = (int)(data.PayloadByName("MessageID"));
+            if (messageidToPid.ContainsKey(messageId))
+               Console.Out.WriteLine("Conflict messageId");
+            else
+                messageidToPid.Add(messageId, data.ProcessID);
+        }
+
+        public static void ProcessALPCRecieve(TraceEvent data)
+        {
+            int messageId = (int)(data.PayloadByName("MessageID"));
+            if(messageidToPid.ContainsKey(messageId))
+            {
+                int senderPid = messageidToPid[messageId];
+                if (!outputProcess.Contains(senderPid))
+                {
+                    alpcOutStream.WriteLine("PID_" + senderPid+";");
+                    outputProcess.Add(senderPid);
+                }
+                if (!outputProcess.Contains(data.ProcessID))
+                {
+                    alpcOutStream.WriteLine("PID_" + data.ProcessID+";");
+                    outputProcess.Add(data.ProcessID);
+                }
+
+                StringBuilder dotString = new StringBuilder();
+                dotString.Append("PID_");
+                dotString.Append(senderPid);
+                dotString.Append(" -> PID_");
+                dotString.Append(data.ProcessID);
+                //                dotString.Append(" [label = \"");
+                //               dotString.Append(edge_count++);
+                //               dotString.Append("\"];");
+                dotString.Append(";");
+                alpcOutStream.WriteLine(dotString.ToString());
+
+                messageidToPid.Remove(messageId);
+            }
+            else
+            {
+                //TODO: discard this event
+            }
         }
     }
+
+
 }

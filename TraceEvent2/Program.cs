@@ -131,8 +131,8 @@ namespace TraceEvent2
                         source.Clr.All += ProcessData;
                         source.Kernel.All += ProcessData;
 
-                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPC;
-                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPC;
+                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPCRecieve;
+                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPCSend;
 
                         var symbolParser = new RegisteredTraceEventParser(source);
                         symbolParser.All += ProcessData;
@@ -141,8 +141,9 @@ namespace TraceEvent2
                         Out.WriteLine("Done Processing.");
                     }
                 }
-                catch
+                catch(Exception e)
                 {
+                    logOut.WriteLine(e.GetType().ToString());
                     logOut.WriteLine(logfile + " not found!");
                 }
             }
@@ -172,7 +173,7 @@ namespace TraceEvent2
         private static void ProcessData(TraceEvent data)
         {
             ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
-            //Print(data);
+            Print(data);
             //TraceAnalysis.Statistic(data);
 
             processer(data);
@@ -181,8 +182,8 @@ namespace TraceEvent2
         private static void Print(TraceEvent data)
         {
             // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
-            if (data.Opcode == TraceEventOpcode.DataCollectionStart)
-                return;
+//            if (data.Opcode == TraceEventOpcode.DataCollectionStart)
+ //               return;
 
             //Out.WriteLine(data.ToXml(new StringBuilder()).ToString());
             dataOut.WriteLine(data.ToString());
