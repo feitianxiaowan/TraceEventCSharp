@@ -81,8 +81,26 @@ namespace TraceEvent2
         private static HashSet<int> outputProcess = new HashSet<int>();
         private static HashSet<int> targetProcessList = new HashSet<int>();
         private static Dictionary<int, int> messageidToPid = new Dictionary<int, int>();
-
+        private static HashSet<String> serviceProcessName = new HashSet<string>();
+        private static HashSet<String> targetProviderList = new HashSet<string>();
+        private static Boolean offline = false;
         static int edge_count = 0;
+
+        private static void init()
+        {
+            if(offline)
+            {
+                alpcOutStream.WriteLine("digraph d");
+                alpcOutStream.WriteLine("{");
+            }
+            else
+            {
+                serviceProcessName.Add("svchost.exe");
+                serviceProcessName.Add("services.exe");
+                serviceProcessName.Add("csrss.exe");
+            }
+
+        }
         public static void ProcessALPCSend(TraceEvent data)
         {
             int messageId = (int)(data.PayloadByName("MessageID"));
@@ -92,33 +110,116 @@ namespace TraceEvent2
                 messageidToPid.Add(messageId, data.ProcessID);
         }
 
+        private static void getTargetProviderNameList(int pid)
+        {
+            string cmdline = "logman query providers -pid " + Convert.ToString(pid);
+ //           string cmdline = "notepad";
+            Console.WriteLine(cmdline);
+
+            System.Diagnostics.Process cmdProcess = new System.Diagnostics.Process();
+            cmdProcess.StartInfo.FileName = "cmd.exe";
+            cmdProcess.StartInfo.UseShellExecute = false;
+            cmdProcess.StartInfo.RedirectStandardInput = true;
+            cmdProcess.StartInfo.RedirectStandardError = true;
+            cmdProcess.StartInfo.RedirectStandardOutput = true;
+            cmdProcess.StartInfo.CreateNoWindow = true;
+            cmdProcess.Start();
+            cmdProcess.StandardInput.WriteLine(cmdline + "&exit");
+            cmdProcess.StandardInput.AutoFlush = true;
+            string output = cmdProcess.StandardOutput.ReadToEnd();
+
+            cmdProcess.WaitForExit();
+            cmdProcess.Close();
+
+            string[] cmdOutputLines = output.Split(new string[] {"\r\n"},StringSplitOptions.None);
+
+            Boolean beginFlag = false;
+            foreach(string eachLine in cmdOutputLines)
+            {
+                if (!beginFlag)
+                {
+                    if (eachLine.Length == 0)
+                        continue;
+                    if (eachLine[0] == '-')
+                        beginFlag = true;
+                    continue;
+                }
+                else
+                    if(eachLine.Length == 0)
+                {
+                        Console.WriteLine(eachLine);
+                }
+                    else
+                {
+                    String providerName = eachLine.Split('{')[0];
+                    providerName = providerName.Trim();
+                    // Console.WriteLine(providerName);
+                    targetProviderList.Add(providerName);
+                }
+            }
+
+        }
+
         public static void ProcessALPCRecieve(TraceEvent data)
         {
             int messageId = (int)(data.PayloadByName("MessageID"));
-            if(messageidToPid.ContainsKey(messageId))
+            if (messageidToPid.ContainsKey(messageId))
             {
                 int senderPid = messageidToPid[messageId];
-                if (!outputProcess.Contains(senderPid))
-                {
-                    alpcOutStream.WriteLine("PID_" + senderPid+";");
-                    outputProcess.Add(senderPid);
-                }
-                if (!outputProcess.Contains(data.ProcessID))
-                {
-                    alpcOutStream.WriteLine("PID_" + data.ProcessID+";");
-                    outputProcess.Add(data.ProcessID);
-                }
 
-                StringBuilder dotString = new StringBuilder();
-                dotString.Append("PID_");
-                dotString.Append(senderPid);
-                dotString.Append(" -> PID_");
-                dotString.Append(data.ProcessID);
-                //                dotString.Append(" [label = \"");
-                //               dotString.Append(edge_count++);
-                //               dotString.Append("\"];");
-                dotString.Append(";");
-                alpcOutStream.WriteLine(dotString.ToString());
+                if (targetProcessList.Contains(senderPid)
+                    || targetProcessList.Contains(data.ProcessID))
+                {
+                    if (!offline)
+                    {
+                        if (!targetProcessList.Contains(senderPid)
+                            && ProcessAnalysis.PidToProcessName.ContainsKey(senderPid)
+                            && !serviceProcessName.Contains(ProcessAnalysis.PidToProcessName[senderPid]))
+                            targetProcessList.Add(senderPid);
+
+                        if (!targetProcessList.Contains(data.ProcessID)
+                            && ProcessAnalysis.PidToProcessName.ContainsKey(data.ProcessID)
+                            && !serviceProcessName.Contains(ProcessAnalysis.PidToProcessName[data.ProcessID]))
+                            targetProcessList.Add(data.ProcessID);
+
+                        getTargetProviderNameList(senderPid);
+                        getTargetProviderNameList(data.ProcessID);
+                    }
+
+                    if (!outputProcess.Contains(senderPid))
+                    {
+                        if (!ProcessAnalysis.PidToProcessName.ContainsKey(senderPid))
+                        {
+                            Console.Out.WriteLine("Unhandle process " + senderPid);
+                            return;
+                        }
+                        alpcOutStream.WriteLine("PID_" + senderPid + "[label=\"" + ProcessAnalysis.PidToProcessName[senderPid] + "\"];");
+                        outputProcess.Add(senderPid);
+                    }
+
+                    if (!outputProcess.Contains(data.ProcessID))
+                    {
+                        if (!ProcessAnalysis.PidToProcessName.ContainsKey(data.ProcessID))
+                        {
+                            Console.Out.WriteLine("Unhandle process " + data.ProcessID);
+                            return;
+                        }
+                        alpcOutStream.WriteLine("PID_" + data.ProcessID + "[label=\"" + ProcessAnalysis.PidToProcessName[data.ProcessID] + "\"];");
+                        outputProcess.Add(data.ProcessID);
+                    }
+
+                    StringBuilder dotString = new StringBuilder();
+                    dotString.Append("PID_");
+                    dotString.Append(senderPid);
+                    dotString.Append(" -> PID_");
+                    dotString.Append(data.ProcessID);
+                    //                dotString.Append(" [label = \"");
+                    //               dotString.Append(edge_count++);
+                    //               dotString.Append("\"];");
+                    dotString.Append(";");
+                    alpcOutStream.WriteLine(dotString.ToString());
+                    alpcOutStream.Flush();
+                 }
 
                 messageidToPid.Remove(messageId);
             }
@@ -129,5 +230,14 @@ namespace TraceEvent2
         }
     }
 
+    class ProcessAnalysis
+    {
+        public static Dictionary<int, String> PidToProcessName = new Dictionary<int, string>();
+
+        public static void ProcessProcess(TraceEvent data)
+        {
+            PidToProcessName[(int)data.PayloadByName("ProcessID")] = data.PayloadStringByName("ImageFileName");
+        }
+    }
 
 }

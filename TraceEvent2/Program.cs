@@ -133,6 +133,8 @@ namespace TraceEvent2
 
                         source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPCRecieve;
                         source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPCSend;
+                        source.Kernel.ProcessDCStart += ProcessAnalysis.ProcessProcess;
+                        source.Kernel.ProcessStart += ProcessAnalysis.ProcessProcess;
 
                         var symbolParser = new RegisteredTraceEventParser(source);
                         symbolParser.All += ProcessData;
