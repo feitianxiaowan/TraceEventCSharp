@@ -38,8 +38,11 @@ namespace TraceEvent2
         {
             // Parse CommandLine Arguments
             bool show_help = false;
+            bool real_time = false;
+
             var commandLineParser = new OptionSet()
             {
+                {"r|realtime", "Start real-time session.",  v => real_time = true},
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
                 {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
@@ -64,9 +67,22 @@ namespace TraceEvent2
 #if DEBUG
             Debugger.Break();
 #endif
-
+            if (real_time)
+            {
+                Out.WriteLine("Ctrl + c to stop collection!");
+                Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) { session.Dispose(); };
+                if (dataCollectTime != 0)
+                {
+                    var timer = new Timer(delegate (object state)
+                    {
+                        Out.WriteLine("Stopped after {0} sec", dataCollectTime);
+                        session.Source.StopProcessing();
+                    }, null, dataCollectTime * 1000, Timeout.Infinite);
+                }
+                ParseRealtime();
+            }
             // Start Parse Events, if there exist logfile parameter
-            if (logFileList.Count() != 0)
+            else if (logFileList.Count() != 0)
             {
                 ParseLogFile();
             }
@@ -117,6 +133,29 @@ namespace TraceEvent2
             }
         }
 
+        public static void ParseRealtime()
+        {
+            if (TraceEventSession.IsElevated() != true)
+            {
+                Out.WriteLine("Must be elevated (Admin) to run this program.");
+                Debugger.Break();
+                return;
+            }
+            session.Dispose();
+            session = new TraceEventSession(sessionName);
+
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
+
+            session.Source.Kernel.All += ProcessData;
+
+            //foreach (var provider in providerNameList)
+            //{
+            //    session.EnableProvider(provider, TraceEventLevel.Always);
+            //}
+
+            session.Source.Process();
+        }
+
         public static void ParseLogFile()
         {
             foreach (var logfile in logFileList)
@@ -160,7 +199,7 @@ namespace TraceEvent2
                 return;
             }
             session.Dispose();
-            session = new TraceEventSession("apt_session", etlFileName);
+            session = new TraceEventSession(sessionName, etlFileName);
 
             foreach (var provider in providerNameList)
             {
@@ -174,8 +213,8 @@ namespace TraceEvent2
 
         private static void ProcessData(TraceEvent data)
         {
-            ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
-            Print(data);
+            //ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
+            ProcessDataDel processer = Print;
             //TraceAnalysis.Statistic(data);
 
             processer(data);
