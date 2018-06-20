@@ -34,22 +34,38 @@ namespace TraceEvent2
 
         static TraceEventSession session = new TraceEventSession(sessionName);
 
+        enum RunningMode : byte
+        {
+            coOccurenceMatrixMode,
+            ALPCAnalysisMode,
+            ParseMode,
+        }
+
         static void Main(string[] args)
         {
             // Parse CommandLine Arguments
             bool show_help = false;
             bool real_time = false;
+            RunningMode mode = RunningMode.ParseMode;
 
             var commandLineParser = new OptionSet()
             {
                 {"r|realtime", "Start real-time session.",  v => real_time = true},
+
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
                 {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
-                // set up etlFileName
                 // set up wether to compress etl file
+
                 {"t|collectTime=", "The time of collect data.", time => dataCollectTime = int.Parse(time) },
-                {"h|help", "Show help information.", v => show_help = v != null}
+
+                {"h|help", "Show help information.", v => show_help = v != null},
+                {"m|mode=", @"Choice an running mode. 'c' for CoOccurenceMatrix, 'a' for ALPC analysis, 'p' for parse", m => {switch(m){
+                        case "a": mode = RunningMode.ALPCAnalysisMode; break;
+                        case "p": mode = RunningMode.ParseMode; break;
+                        case "c": mode = RunningMode.coOccurenceMatrixMode; break;
+                        default: show_help = true; break;
+                    } } }
             };
 
             try
@@ -67,6 +83,18 @@ namespace TraceEvent2
 #if DEBUG
             Debugger.Break();
 #endif
+            // 选择处理函数
+            switch (mode)
+            {
+                case RunningMode.ParseMode:
+                    processer = TraceAnalysis.PrintPickupInfo; break;
+                case RunningMode.ALPCAnalysisMode:
+                    processer = ALPCAnalysis.ProcessALPC; break;
+                case RunningMode.coOccurenceMatrixMode:
+                    processer = CoOccurenceMatrix.ProcessCoOccurence; break;
+                default: processer = Print; break;
+            }
+
             if (real_time)
             {
                 Out.WriteLine("Ctrl + c to stop collection!");
@@ -117,7 +145,8 @@ namespace TraceEvent2
 
         private static void WindUp()
         {
-            TraceAnalysis.PrintStatisticInfo();
+            //TraceAnalysis.PrintStatisticInfo();
+            CoOccurenceMatrix.PrintCoOccurenceMatrix();
         }
 
         private static void SetDataOut(string outputPath)
@@ -160,30 +189,23 @@ namespace TraceEvent2
         {
             foreach (var logfile in logFileList)
             {
-                try { 
-                    using (var source = new ETWTraceEventSource(logfile))
-                    {
-                        if (source.EventsLost != 0)
-                            Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
+                var source = new ETWTraceEventSource(logfile);
+                if (source.EventsLost != 0)
+                    Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
 
-                        // Set up callbacks to 
-                        source.Clr.All += ProcessData;
-                        source.Kernel.All += ProcessData;
+                // Set up callbacks to 
+                source.Clr.All += ProcessData;
+                source.Kernel.All += ProcessData;
 
-                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPC;
-                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPC;
+                source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPC;
+                source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPC;
 
-                        var symbolParser = new RegisteredTraceEventParser(source);
-                        symbolParser.All += ProcessData;
+                var symbolParser = new RegisteredTraceEventParser(source);
+                symbolParser.All += ProcessData;
 
-                        source.Process();
-                        Out.WriteLine("Done Processing.");
-                    }
-                }
-                catch
-                {
-                    logOut.WriteLine(logfile + " not found!");
-                }
+                source.Process();
+                Out.WriteLine("Done Processing.");
+                
             }
         }
 
@@ -207,19 +229,15 @@ namespace TraceEvent2
         }
 
         public delegate void ProcessDataDel(TraceEvent data);
+        public static ProcessDataDel processer = Print;
 
         private static void ProcessData(TraceEvent data)
         {
-            //ProcessDataDel processer = TraceAnalysis.PrintPickupInfo;
-            ProcessDataDel processer = Print;
-            //TraceAnalysis.Statistic(data);
-
             processer(data);
         }
 
         private static void Print(TraceEvent data)
         {
-            // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
             if (data.Opcode == TraceEventOpcode.DataCollectionStart)
                 return;
 
@@ -228,7 +246,5 @@ namespace TraceEvent2
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
         }
-
-
     }
 }
