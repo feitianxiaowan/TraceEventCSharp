@@ -17,13 +17,13 @@ namespace TraceEvent2
         private static int currentStep = -1;
         private static Dictionary<string, int> windowsCount = new Dictionary<string, int>();
 
-        private static readonly int stepSize = 1000;
+        private static readonly int stepSize = 100;
         private static readonly int windowSize = stepSize * 1;
 
         private static int eventCount = -1;
 
         public static System.IO.TextWriter logOut = Console.Out;
-        public static TextWriter dataOut = new StreamWriter(new FileStream("CoOccurenceMatrix.csv", FileMode.OpenOrCreate, FileAccess.ReadWrite));
+        public static TextWriter dataOut = Console.Out;// new StreamWriter(new FileStream("CoOccurenceMatrix.csv", FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
         public static void ProcessCoOccurence(TraceEvent data)
         {
@@ -90,6 +90,7 @@ namespace TraceEvent2
 
         public static void PrintCoOccurenceMatrix()
         {
+            StatisticEvent();
             logOut.WriteLine(eventCount);
             for (var index = 0; index <coOccurenceMatrix.Count(); index++)
             {
@@ -117,6 +118,7 @@ namespace TraceEvent2
                 }
                 dataOut.WriteLine();
             }
+            logOut.WriteLine("PrintCoOccurenceMatrix finished!");
         }
 
     }

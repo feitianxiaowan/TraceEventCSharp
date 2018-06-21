@@ -24,15 +24,18 @@ namespace TraceEvent2
         public static TextWriter logOut = Console.Out;
         public static TextWriter dataOut = Console.Out;
 
-        static List<string> logFileList = new List<string>();
-        static List<string> providerNameList = new List<string>();
+        private static List<string> logFileList = new List<string>();
+        private static List<string> providerNameList = new List<string>();
 
-        static int dataCollectTime = 0;
+        private static int dataCollectTime = 0;
 
-        static string sessionName = "apt_session";
-        static string etlFileName = "output.etl";
+        private static HashSet<int> processWhiteList = new HashSet<int>();
+        private static bool processWhiteListFlag = false;
 
-        static TraceEventSession session = new TraceEventSession(sessionName);
+        private static string sessionName = "apt_session";
+        private static string etlFileName = "output.etl";
+
+        private static TraceEventSession session = new TraceEventSession(sessionName);
 
         enum RunningMode : byte
         {
@@ -58,6 +61,8 @@ namespace TraceEvent2
                 // set up wether to compress etl file
 
                 {"t|collectTime=", "The time of collect data.", time => dataCollectTime = int.Parse(time) },
+
+                {"processId=", "The process white list.", id => { processWhiteList.Add(Int32.Parse(id)); processWhiteListFlag = true; } },
 
                 {"h|help", "Show help information.", v => show_help = v != null},
                 {"m|mode=", @"Choice an running mode. 'c' for CoOccurenceMatrix, 'a' for ALPC analysis, 'p' for parse", m => {switch(m){
@@ -141,6 +146,8 @@ namespace TraceEvent2
         {
             Out.WriteLine("Usage:");
             p.WriteOptionDescriptions(Out);
+            Out.WriteLine("Samples:");
+            Out.WriteLine(@"--logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p");
         }
 
         private static void WindUp()
@@ -233,7 +240,23 @@ namespace TraceEvent2
 
         private static void ProcessData(TraceEvent data)
         {
+            if (Filter(data))
+                return;
+
             processer(data);
+        }
+
+        private static bool Filter(TraceEvent data)
+        {
+            if (!processWhiteListFlag) return false;
+            else if (processWhiteList.Contains(data.ProcessID))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         private static void Print(TraceEvent data)

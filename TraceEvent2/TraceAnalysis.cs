@@ -63,11 +63,13 @@ namespace TraceEvent2
 
         public static string PickupInfo(TraceEvent data)
         {
-            StringBuilder info = new StringBuilder();
-            info.Append(data.TimeStamp);
-            info.Append(data.EventName);
+            //StringBuilder info = new StringBuilder();
+            //info.Append(data.TimeStamp);
+            //info.Append(data.EventName);
 
-            return info.ToString();
+            //return info.ToString();
+
+            return data.ToString();
         }
     }
 
