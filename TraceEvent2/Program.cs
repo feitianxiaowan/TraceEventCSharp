@@ -49,15 +49,19 @@ namespace TraceEvent2
             // Parse CommandLine Arguments
             bool show_help = false;
             bool real_time = false;
+            bool print_manifest = false;
+
             RunningMode mode = RunningMode.ParseMode;
 
             var commandLineParser = new OptionSet()
             {
                 {"r|realtime", "Start real-time session.",  v => real_time = true},
+                {"manifest", "Get Manifest of certain providers.", v => print_manifest = true},
 
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
                 {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
+                {"providerList=", "The providers names' list file", listName => ReadInProviderList(listName)},
                 // set up wether to compress etl file
 
                 {"t|collectTime=", "The time of collect data.", time => dataCollectTime = int.Parse(time) },
@@ -83,7 +87,11 @@ namespace TraceEvent2
                 ShowHelp(null);
                 return;
             }
-            if (show_help) ShowHelp(commandLineParser);
+            if (show_help)
+            {
+                ShowHelp(commandLineParser);
+                return;
+            }
 
 #if DEBUG
             Debugger.Break();
@@ -98,6 +106,12 @@ namespace TraceEvent2
                 case RunningMode.coOccurenceMatrixMode:
                     processer = CoOccurenceMatrix.ProcessCoOccurence; break;
                 default: processer = Print; break;
+            }
+
+            if (print_manifest)
+            {
+                PrintManifest();
+                return;
             }
 
             if (real_time)
@@ -135,6 +149,7 @@ namespace TraceEvent2
                 CollectLogFile();
             }
 
+
             WindUp();
 #if DEBUG
             Debugger.Break();
@@ -147,7 +162,66 @@ namespace TraceEvent2
             Out.WriteLine("Usage:");
             p.WriteOptionDescriptions(Out);
             Out.WriteLine("Samples:");
-            Out.WriteLine(@"--logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p");
+            Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p");
+            Out.WriteLine(@"TraceEvent2.exe --providerList=allProviders.txt --manifest");
+            Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --processId=6464 --processId=644 --processId=284 --mode=c > CoOccurenceMatrix.csv");
+        }
+
+        private static void PrintManifest()
+        {
+            foreach(var provider in providerNameList)
+            {
+                PrintManifest(provider);
+            }
+        }
+
+        private static void PrintManifest(string providerName)
+        {
+            string manifest;
+            try
+            {
+                manifest = RegisteredTraceEventParser.GetManifestForRegisteredProvider(providerName);
+            }
+            catch
+            {
+                return;
+            }
+            FileStream fs = new FileStream(providerName + ".xml", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            dataOut = new StreamWriter(fs);
+            dataOut.Write(manifest);
+            dataOut.Close();
+            fs.Close();
+        }
+
+        private static void PrintAllManifest()
+        {
+            // list all registered proviers in the system
+            
+        }
+
+        private static void ReadInProviderList(string listName)
+        {
+            TextReader dataIn;
+            string providerName;
+            try
+            {
+                FileStream fs = new FileStream(listName, FileMode.Open, FileAccess.ReadWrite);
+                dataIn = new StreamReader(fs);
+            }
+            catch
+            {
+                logOut.WriteLine("Can't open listName file:" + listName);
+                return;
+            }
+
+            try
+            {
+                while ((providerName = dataIn.ReadLine()) != null) providerNameList.Add(providerName.Trim());
+            }
+            catch
+            {
+
+            }
         }
 
         private static void WindUp()
