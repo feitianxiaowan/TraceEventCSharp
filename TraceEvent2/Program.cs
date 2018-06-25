@@ -118,8 +118,8 @@ namespace TraceEvent2
             {
                 case RunningMode.ParseMode:
                     processer = TraceAnalysis.PrintPickupInfo; break;
-                case RunningMode.ALPCAnalysisMode:
-                    processer = ALPCAnalysis.ProcessALPC; break;
+                //case RunningMode.ALPCAnalysisMode:
+                //    processer = ALPCAnalysis.ProcessALPC; break;
                 case RunningMode.coOccurenceMatrixMode:
                     processer = CoOccurenceMatrix.ProcessCoOccurence; break;
                 case RunningMode.ParseCallStackMode:
