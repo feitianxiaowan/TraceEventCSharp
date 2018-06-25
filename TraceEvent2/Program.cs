@@ -29,7 +29,10 @@ namespace TraceEvent2
         public static TextWriter dataOut = Console.Out;
 
         private static List<string> logFileList = new List<string>();
+
+        private static bool useGuid = false;
         private static List<string> providerNameList = new List<string>();
+        private static List<Guid> providerGuidList = new List<Guid>();
 
         private static int dataCollectTime = 0;
 
@@ -81,6 +84,7 @@ namespace TraceEvent2
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
                 {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
+                {"guid", "Use providers' guid instead of providers' name.", v => useGuid = true},
                 {"providerList=", "The providers names' list file", listName => ReadInProviderList(listName)},
                 // set up wether to compress etl file
 
@@ -198,10 +202,37 @@ namespace TraceEvent2
 
         private static void PrintManifest()
         {
+            foreach(var providerGuid in providerGuidList)
+            {
+                Out.WriteLine(providerGuid.ToString());
+                PrintManifest(providerGuid);
+            }
+
             foreach(var provider in providerNameList)
             {
+                Out.WriteLine(provider);
                 PrintManifest(provider);
             }
+        }
+
+        private static void PrintManifest(Guid providerGuid)
+        {
+            string manifest;
+            try
+            {
+                manifest = RegisteredTraceEventParser.GetManifestForRegisteredProvider(providerGuid);
+                //Out.Write(manifest);
+            }
+            catch
+            {
+                //logOut.WriteLine();
+                return;
+            }
+            FileStream fs = new FileStream(providerGuid.ToString() + ".xml", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            dataOut = new StreamWriter(fs);
+            dataOut.Write(manifest);
+            dataOut.Close();
+            fs.Close();
         }
 
         private static void PrintManifest(string providerName)
@@ -210,9 +241,11 @@ namespace TraceEvent2
             try
             {
                 manifest = RegisteredTraceEventParser.GetManifestForRegisteredProvider(providerName);
+                //Out.Write(manifest);
             }
             catch
             {
+                //logOut.WriteLine();
                 return;
             }
             FileStream fs = new FileStream(providerName + ".xml", FileMode.OpenOrCreate, FileAccess.ReadWrite);
@@ -245,7 +278,13 @@ namespace TraceEvent2
 
             try
             {
-                while ((providerName = dataIn.ReadLine()) != null) providerNameList.Add(providerName.Trim());
+                while ((providerName = dataIn.ReadLine()) != null)
+                {
+                    if (useGuid)
+                        providerGuidList.Add(new Guid(providerName));
+                    else
+                        providerNameList.Add(providerName.Trim());
+                }
             }
             catch
             {
