@@ -13,8 +13,12 @@ using NDesk.Options;
 
 using Microsoft.Diagnostics;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Diagnostics.Tracing.Etlx;
 using Microsoft.Diagnostics.Tracing.Parsers;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Session;
+using Microsoft.Diagnostics.Symbols;
 
 namespace TraceEvent2
 {
@@ -32,6 +36,8 @@ namespace TraceEvent2
         private static HashSet<int> processWhiteList = new HashSet<int>();
         private static bool processWhiteListFlag = false;
 
+        private static TraceEventProviderOptions enableOptions = new TraceEventProviderOptions() { StacksEnabled = false };
+
         private static string sessionName = "apt_session";
         private static string etlFileName = "output.etl";
 
@@ -41,7 +47,9 @@ namespace TraceEvent2
         {
             coOccurenceMatrixMode,
             ALPCAnalysisMode,
+            ParseCallStackMode,
             ParseMode,
+            Default,
         }
 
         static void Main(string[] args)
@@ -50,14 +58,26 @@ namespace TraceEvent2
             bool show_help = false;
             bool real_time = false;
             bool print_manifest = false;
+            bool enableCallStack = false;
 
-            RunningMode mode = RunningMode.ParseMode;
+            RunningMode mode = RunningMode.Default;
 
             var commandLineParser = new OptionSet()
             {
+                // Top level configuration. Decide how we handle the event.
                 {"r|realtime", "Start real-time session.",  v => real_time = true},
-                {"manifest", "Get Manifest of certain providers.", v => print_manifest = true},
+                {"c|callstack", "Enable all call stack", v => {enableOptions.StacksEnabled = true; enableCallStack = true; } },
 
+                // Parse function configuration. 
+                {"m|mode=", @"Choice an running mode. 'c' for CoOccurenceMatrix, 'a' for ALPC analysis, 's' for call stack, 'p' for parse", m => {switch(m){
+                        case "a": mode = RunningMode.ALPCAnalysisMode; break;
+                        case "p": mode = RunningMode.ParseMode; break;
+                        case "s": mode = RunningMode.ParseCallStackMode; break;
+                        case "c": mode = RunningMode.coOccurenceMatrixMode; break;
+                        default: show_help = true; break;
+                    } } },
+
+                // Detail configuration.
                 {"l|logfile=", "The logfile's path.", logFile => logFileList.Add(logFile)},
                 {"o|output=", "The output file path.", outputPath => SetDataOut(outputPath)},
                 {"p|provider=", "The provider's names.", providerName => providerNameList.Add(providerName)},
@@ -68,13 +88,10 @@ namespace TraceEvent2
 
                 {"processId=", "The process white list.", id => { processWhiteList.Add(Int32.Parse(id)); processWhiteListFlag = true; } },
 
-                {"h|help", "Show help information.", v => show_help = v != null},
-                {"m|mode=", @"Choice an running mode. 'c' for CoOccurenceMatrix, 'a' for ALPC analysis, 'p' for parse", m => {switch(m){
-                        case "a": mode = RunningMode.ALPCAnalysisMode; break;
-                        case "p": mode = RunningMode.ParseMode; break;
-                        case "c": mode = RunningMode.coOccurenceMatrixMode; break;
-                        default: show_help = true; break;
-                    } } }
+                // Stand alone.
+                {"manifest", "Get Manifest of certain providers.", v => print_manifest = true},
+                {"h|help", "Show help information.", v => show_help = v != null}
+
             };
 
             try
@@ -105,6 +122,8 @@ namespace TraceEvent2
                     processer = ALPCAnalysis.ProcessALPC; break;
                 case RunningMode.coOccurenceMatrixMode:
                     processer = CoOccurenceMatrix.ProcessCoOccurence; break;
+                case RunningMode.ParseCallStackMode:
+                    processer = CallStackParser.ProcessCallStack; break;
                 default: processer = Print; break;
             }
 
@@ -114,8 +133,15 @@ namespace TraceEvent2
                 return;
             }
 
+            // 选择处理方法
             if (real_time)
             {
+                if (TraceEventSession.IsElevated() != true)
+                {
+                    Out.WriteLine("Must be elevated (Admin) to run this program.");
+                    Debugger.Break();
+                    return;
+                }
                 Out.WriteLine("Ctrl + c to stop collection!");
                 Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) { session.Dispose(); };
                 if (dataCollectTime != 0)
@@ -126,7 +152,10 @@ namespace TraceEvent2
                         session.Source.StopProcessing();
                     }, null, dataCollectTime * 1000, Timeout.Infinite);
                 }
-                ParseRealtime();
+                if (enableCallStack)
+                    ParseCallStackRealtime();
+                else
+                    ParseRealtime();
             }
             // Start Parse Events, if there exist logfile parameter
             else if (logFileList.Count() != 0)
@@ -245,12 +274,6 @@ namespace TraceEvent2
 
         public static void ParseRealtime()
         {
-            if (TraceEventSession.IsElevated() != true)
-            {
-                Out.WriteLine("Must be elevated (Admin) to run this program.");
-                Debugger.Break();
-                return;
-            }
             session.Dispose();
             session = new TraceEventSession(sessionName);
 
@@ -258,10 +281,29 @@ namespace TraceEvent2
 
             session.Source.Kernel.All += ProcessData;
 
-            //foreach (var provider in providerNameList)
-            //{
-            //    session.EnableProvider(provider, TraceEventLevel.Always);
-            //}
+            foreach (var provider in providerNameList)
+            {
+                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+            }
+
+            session.Source.Process();
+        }
+
+        public static void ParseCallStackRealtime()
+        {
+            session.Dispose();
+            session = new TraceEventSession(sessionName);
+
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
+
+            TraceLogEventSource traceLogSource = TraceLog.CreateFromTraceEventSession(session);
+
+            traceLogSource.AllEvents += ProcessData;
+
+            foreach (var provider in providerNameList)
+            {
+                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+            }
 
             session.Source.Process();
         }
@@ -303,7 +345,7 @@ namespace TraceEvent2
 
             foreach (var provider in providerNameList)
             {
-                session.EnableProvider(provider, TraceEventLevel.Always);
+                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
             }
             if (dataCollectTime == 0) Thread.Sleep(int.MaxValue);
             else Thread.Sleep(dataCollectTime * 1000);
@@ -342,6 +384,21 @@ namespace TraceEvent2
             dataOut.WriteLine(data.ToString());
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
+
+            var callStack = data.CallStack();
+            if(callStack != null)
+            {
+                var codeAddress = callStack.CodeAddress;
+                if(codeAddress.Method == null)
+                {
+                    var moduleFile = codeAddress.ModuleFile;
+                    if(moduleFile == null)
+                    {
+                        
+                    }
+                }
+            }
+
         }
     }
 }

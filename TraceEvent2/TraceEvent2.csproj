@@ -100,6 +100,7 @@
     <Compile Include="TraceEventSamples\41_TraceLogMonitor.cs" />
     <Compile Include="TraceEventSamples\50_SimpleFileRelogger.cs" />
     <Compile Include="TraceEventSamples\51_SimpleMonitorRelogger.cs" />
+    <Compile Include="CallStackParser.cs" />
     <Compile Include="TraceEventSamples\SupportFiles\EventProducer.cs" />
   </ItemGroup>
   <ItemGroup>
