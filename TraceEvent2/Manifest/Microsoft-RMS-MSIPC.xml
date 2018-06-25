@@ -1,0 +1,31 @@
+<instrumentationManifest xmlns="http://schemas.microsoft.com/win/2004/08/events">
+ <instrumentation xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events">
+  <events>
+   <provider name="Microsoft-RMS-MSIPC" guid="{d40dc05f-f932-416b-a915-a92b0745a199}" resourceFileName="Microsoft-RMS-MSIPC" messageFileName="Microsoft-RMS-MSIPC" symbol="MicrosoftRMSMSIPC" source="Xml" >
+    <keywords>
+    </keywords>
+    <tasks>
+     <task name="MSIPC" message="$(string.task_MSIPC)" value="1"/>
+    </tasks>
+    <events>
+     <event value="1" symbol="MSIPC" version="0" task="MSIPC" level="win:Verbose" template="MSIPCArgs"/>
+     <event value="2" symbol="MSIPC2" version="0" task="MSIPC" level="win:Informational" template="MSIPCArgs"/>
+     <event value="3" symbol="MSIPC3" version="0" task="MSIPC" level="win:Warning" template="MSIPCArgs"/>
+     <event value="4" symbol="MSIPC4" version="0" task="MSIPC" level="win:Error" template="MSIPCArgs"/>
+    </events>
+    <templates>
+     <template tid="MSIPCArgs">
+      <data name="Value" inType="win:UnicodeString"/>
+     </template>
+    </templates>
+   </provider>
+  </events>
+ </instrumentation>
+ <localization>
+  <resources culture="en-US">
+   <stringTable>
+    <string id="task_MSIPC" value="MSIPC"/>
+   </stringTable>
+  </resources>
+ </localization>
+</instrumentationManifest>

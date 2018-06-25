@@ -202,17 +202,29 @@ namespace TraceEvent2
 
         private static void PrintManifest()
         {
+            ThreadPool.SetMaxThreads(10, 10);
+
             foreach(var providerGuid in providerGuidList)
             {
                 Out.WriteLine(providerGuid.ToString());
-                PrintManifest(providerGuid);
+                ThreadPool.QueueUserWorkItem(PrintManifest, providerGuid);
             }
 
             foreach(var provider in providerNameList)
             {
                 Out.WriteLine(provider);
-                PrintManifest(provider);
+                ThreadPool.QueueUserWorkItem(PrintManifest, provider);
             }
+        }
+
+        public static void PrintManifest(Object state)
+        {
+            string s = "";
+            if (Object.ReferenceEquals(state.GetType(), s.GetType()))
+                PrintManifest(state.ToString());
+            else
+                PrintManifest((Guid)state);
+
         }
 
         private static void PrintManifest(Guid providerGuid)
