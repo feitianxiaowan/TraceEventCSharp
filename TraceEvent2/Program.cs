@@ -320,8 +320,10 @@ namespace TraceEvent2
                 source.Clr.All += ProcessData;
                 source.Kernel.All += ProcessData;
 
-                source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPC;
-                source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPC;
+                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPCRecieve;
+                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPCSend;
+                        source.Kernel.ProcessDCStart += ProcessAnalysis.ProcessProcess;
+                        source.Kernel.ProcessStart += ProcessAnalysis.ProcessProcess;
 
                 var symbolParser = new RegisteredTraceEventParser(source);
                 symbolParser.All += ProcessData;
@@ -377,8 +379,9 @@ namespace TraceEvent2
 
         private static void Print(TraceEvent data)
         {
-            if (data.Opcode == TraceEventOpcode.DataCollectionStart)
-                return;
+            // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
+//            if (data.Opcode == TraceEventOpcode.DataCollectionStart)
+ //               return;
 
             //Out.WriteLine(data.ToXml(new StringBuilder()).ToString());
             dataOut.WriteLine(data.ToString());
