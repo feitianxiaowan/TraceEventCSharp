@@ -38,7 +38,7 @@ namespace TraceEvent2
 
         private static TraceEventProviderOptions enableOptions = new TraceEventProviderOptions() { StacksEnabled = false };
 
-        private static string sessionName = "apt_session";
+        private static string sessionName = "apt_sessions";
         private static string etlFileName = "output.etl";
 
         private static TraceEventSession session = new TraceEventSession(sessionName);
@@ -153,14 +153,17 @@ namespace TraceEvent2
                     }, null, dataCollectTime * 1000, Timeout.Infinite);
                 }
                 if (enableCallStack)
-                    ParseCallStackRealtime();
+                    ParseRealtimeWithCallStack();
                 else
                     ParseRealtime();
             }
             // Start Parse Events, if there exist logfile parameter
             else if (logFileList.Count() != 0)
             {
-                ParseLogFile();
+                if (enableCallStack)
+                    ParseLogFileWithCallStack();
+                else
+                    ParseLogFile();
             }
             // or log file
             else if(providerNameList.Count() != 0)
@@ -175,7 +178,10 @@ namespace TraceEvent2
                         session.Source.StopProcessing();
                     }, null, dataCollectTime * 1000, Timeout.Infinite);
                 }
-                CollectLogFile();
+                if (enableCallStack)
+                    CollectLogFileWithCallStack();
+                else
+                    CollectLogFile();
             }
 
 
@@ -191,8 +197,10 @@ namespace TraceEvent2
             Out.WriteLine("Usage:");
             p.WriteOptionDescriptions(Out);
             Out.WriteLine("Samples:");
-            Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p");
-            Out.WriteLine(@"TraceEvent2.exe --providerList=allProviders.txt --manifest");
+            Out.WriteLine(@"TraceEvent2.exe --providerList=allProviders.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");
+            Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl  --callstack --mode=s // 用p模式的解析函数，解析包含call stacker的output.etl");
+            Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p // 用p模式的解析函数，解析output.etl中4188进程的event");
+            Out.WriteLine(@"TraceEvent2.exe --providerList=allProviders.txt --manifest // 获取指定provider的manifest");
             Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --processId=6464 --processId=644 --processId=284 --mode=c > CoOccurenceMatrix.csv");
         }
 
@@ -272,7 +280,7 @@ namespace TraceEvent2
             }
         }
 
-        public static void ParseRealtime()
+        private static void ParseRealtime()
         {
             session.Dispose();
             session = new TraceEventSession(sessionName);
@@ -289,7 +297,7 @@ namespace TraceEvent2
             session.Source.Process();
         }
 
-        public static void ParseCallStackRealtime()
+        private static void ParseRealtimeWithCallStack()
         {
             session.Dispose();
             session = new TraceEventSession(sessionName);
@@ -308,7 +316,7 @@ namespace TraceEvent2
             session.Source.Process();
         }
 
-        public static void ParseLogFile()
+        private static void ParseLogFile()
         {
             foreach (var logfile in logFileList)
             {
@@ -334,7 +342,22 @@ namespace TraceEvent2
             }
         }
 
-        public static void CollectLogFile()
+        private static void ParseLogFileWithCallStack()
+        {
+            foreach (var logfile in logFileList)
+            {
+                var source = new ETWTraceEventSource(logfile);
+                if (source.EventsLost != 0)
+                    Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
+
+                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = Out });
+                TraceLogEventSource logEventSource = traceLog.Events.GetSource();
+
+                logEventSource.AllEvents += ProcessData;   
+            }
+        }
+
+        private static void CollectLogFile()
         {
             if (TraceEventSession.IsElevated() != true)
             {
@@ -347,10 +370,22 @@ namespace TraceEvent2
 
             foreach (var provider in providerNameList)
             {
-                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+                try
+                {
+                    session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+                }
+                catch
+                {
+                    logOut.WriteLine(provider);
+                }
             }
             if (dataCollectTime == 0) Thread.Sleep(int.MaxValue);
             else Thread.Sleep(dataCollectTime * 1000);
+        }
+
+        private static void CollectLogFileWithCallStack()
+        {
+            CollectLogFile();
         }
 
         public delegate void ProcessDataDel(TraceEvent data);

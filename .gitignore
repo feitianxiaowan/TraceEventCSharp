@@ -9,3 +9,6 @@ packages/
 *.etl
 *.bk
 *.txt
+*.vspx
+*.diagsession
+*.zip

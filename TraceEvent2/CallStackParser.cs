@@ -14,7 +14,6 @@ namespace TraceEvent2
 {
     class CallStackParser
     {
-
         public static TextWriter dataOut = Console.Out;
 
         private static SymbolPath symbolPath = new SymbolPath(SymbolPath.SymbolPathFromEnvironment).Add(SymbolPath.MicrosoftSymbolServerPath);
@@ -31,6 +30,8 @@ namespace TraceEvent2
             if (data is UnhandledTraceEvent)
                 dataOut.WriteLine(data.Dump());
 
+            dataOut.Write(data.EventName + ":");
+
             var callStack = data.CallStack();
             while (callStack != null)
             {
@@ -45,7 +46,7 @@ namespace TraceEvent2
                     else
                     {
                         codeAddress.CodeAddresses.LookupSymbolsForModule(symbolReader, moduleFile);
-                        dataOut.WriteLine(codeAddress.FullMethodName);
+                        dataOut.Write(codeAddress.FullMethodName + ",");
                     }
                 }
                 callStack = callStack.Caller;
