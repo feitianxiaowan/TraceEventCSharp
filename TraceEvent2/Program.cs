@@ -264,7 +264,7 @@ namespace TraceEvent2
         private static void WindUp()
         {
             //TraceAnalysis.PrintStatisticInfo();
-            CoOccurenceMatrix.PrintCoOccurenceMatrix();
+            //CoOccurenceMatrix.PrintCoOccurenceMatrix();
         }
 
         private static void SetDataOut(string outputPath)
@@ -353,7 +353,9 @@ namespace TraceEvent2
                 var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = Out });
                 TraceLogEventSource logEventSource = traceLog.Events.GetSource();
 
-                logEventSource.AllEvents += ProcessData;   
+                logEventSource.AllEvents += ProcessData;
+
+                logEventSource.Process();
             }
         }
 
@@ -367,6 +369,8 @@ namespace TraceEvent2
             }
             session.Dispose();
             session = new TraceEventSession(sessionName, etlFileName);
+
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.All);
 
             foreach (var provider in providerNameList)
             {
