@@ -20,6 +20,15 @@ using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Diagnostics.Symbols;
 
+
+/*
+Out.WriteLine(@"TraceEvent2.exe --providerList=provider_list.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");
+Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl  --callstack --mode=s // 用p模式的解析函数，解析包含call stacker的output.etl");
+Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --mode=p // 用p模式的解析函数，解析output.etl中4188进程的event");
+Out.WriteLine(@"TraceEvent2.exe --providerList=allProviders.txt --manifest // 获取指定provider的manifest");
+Out.WriteLine(@"TraceEvent2.exe --logfile=c:\Users\xiaowan\Desktop\output.etl --processId=4188 --processId=6464 --processId=644 --processId=284 --mode=c > CoOccurenceMatrix.csv");
+*/
+
 namespace TraceEvent2
 {
     class Program
@@ -161,7 +170,7 @@ namespace TraceEvent2
             else if (logFileList.Count() != 0)
             {
                 if (enableCallStack)
-                    ParseLogFileWithCallStack();
+                    CallStackParser.ParseLogFileWithCallStack(logFileList);
                 else
                     ParseLogFile();
             }
@@ -223,6 +232,7 @@ namespace TraceEvent2
             {
                 return;
             }
+            logOut.WriteLine(providerName);
             FileStream fs = new FileStream(providerName + ".xml", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             dataOut = new StreamWriter(fs);
             dataOut.Write(manifest);
@@ -342,22 +352,6 @@ namespace TraceEvent2
             }
         }
 
-        private static void ParseLogFileWithCallStack()
-        {
-            foreach (var logfile in logFileList)
-            {
-                var source = new ETWTraceEventSource(logfile);
-                if (source.EventsLost != 0)
-                    Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
-
-                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = Out });
-                TraceLogEventSource logEventSource = traceLog.Events.GetSource();
-
-                logEventSource.AllEvents += ProcessData;
-
-                logEventSource.Process();
-            }
-        }
 
         private static void CollectLogFile()
         {
@@ -370,7 +364,8 @@ namespace TraceEvent2
             session.Dispose();
             session = new TraceEventSession(sessionName, etlFileName);
 
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.All);
+            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.All);
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread);
 
             foreach (var provider in providerNameList)
             {
