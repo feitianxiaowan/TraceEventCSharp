@@ -81,6 +81,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AudioDetector.cs" />
     <Compile Include="CoOccurenceMatrix.cs" />
     <Compile Include="TraceAnalysis.cs" />
     <Compile Include="Program.cs" />

@@ -20,6 +20,7 @@ using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Diagnostics.Symbols;
 
+using TraceEvent2;
 
 /*
 Out.WriteLine(@"TraceEvent2.exe --providerList=provider_list.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");
@@ -83,7 +84,7 @@ namespace TraceEvent2
                         case "p": mode = RunningMode.ParseMode; break;
                         case "s": mode = RunningMode.ParseCallStackMode; break;
                         case "c": mode = RunningMode.coOccurenceMatrixMode; break;
-                        default: show_help = true; break;
+                        default: mode = RunningMode.Default; show_help = true; break;
                     } } },
 
                 // Detail configuration.
@@ -123,6 +124,7 @@ namespace TraceEvent2
             Debugger.Break();
 #endif
             // 选择处理函数
+            AudioDetector audioDetector;
             switch (mode)
             {
                 case RunningMode.ParseMode:
@@ -133,7 +135,7 @@ namespace TraceEvent2
                     processer = CoOccurenceMatrix.ProcessCoOccurence; break;
                 case RunningMode.ParseCallStackMode:
                     processer = CallStackParser.ProcessCallStack; break;
-                default: processer = Print; break;
+                default: processer = AudioDetector.EventReader; break;
             }
 
             if (print_manifest)
@@ -295,9 +297,9 @@ namespace TraceEvent2
             session.Dispose();
             session = new TraceEventSession(sessionName);
 
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
+            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
 
-            session.Source.Kernel.All += ProcessData;
+            session.Source.AllEvents += ProcessData;
 
             foreach (var provider in providerNameList)
             {
