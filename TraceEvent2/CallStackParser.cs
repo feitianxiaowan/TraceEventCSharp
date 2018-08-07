@@ -15,7 +15,7 @@ namespace TraceEvent2
     class CallStackParser
     {
         public static TextWriter Out = Console.Out;
-        public static TextWriter dataOut = Console.Out;
+        public static TextWriter dataOut = new StreamWriter(new FileStream("dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
         private static SymbolPath symbolPath = new SymbolPath(SymbolPath.SymbolPathFromEnvironment).Add(SymbolPath.MicrosoftSymbolServerPath);
         private static TextWriter SymbolLookupMessages = new StringWriter();
@@ -36,10 +36,13 @@ namespace TraceEvent2
 
                 foreach(var process in traceLog.Processes)
                 {
-                    foreach (var module in process.LoadedModules)
+                    if (process.ProcessID == 16992)
                     {
-
-                        traceLog.CodeAddresses.LookupSymbolsForModule(symbolReader, module.ModuleFile);
+                        foreach (var module in process.LoadedModules)
+                        {
+                            //if (!module.ModuleFile.Name.Equals( "gdiplus")) continue;
+                            traceLog.CodeAddresses.LookupSymbolsForModule(symbolReader, module.ModuleFile);
+                        }
                     }
                 }
 
@@ -53,6 +56,9 @@ namespace TraceEvent2
 
         public static void ProcessCallStack(TraceEvent data)
         {
+            if (data.ProcessID != 16992)
+                return;
+
             if (data.Opcode == TraceEventOpcode.DataCollectionStart)
                 return;
 
@@ -92,12 +98,12 @@ namespace TraceEvent2
                     var sourceLocation = callStack.CodeAddress.GetSourceLine(symbolReader);
                     if (sourceLocation != null)
                         lineInfo = string.Format("  AT: {0}({1})", Path.GetFileName(sourceLocation.SourceFile.BuildTimeFilePath), sourceLocation.LineNumber);
-                    Out.WriteLine("    Method: {0}!{1}{2}", module.Name, method.FullMethodName, lineInfo);
+                    dataOut.WriteLine("    Method: {0}!{1}{2}", module.Name, method.FullMethodName, lineInfo);
                 }
                 else if (module != null)
-                    Out.WriteLine("    Module: {0}!0x{1:x}", module.Name, callStack.CodeAddress.Address);
+                    dataOut.WriteLine("    Module: {0}!0x{1:x}", module.Name, callStack.CodeAddress.Address);
                 else
-                    Out.WriteLine("    ?!0x{0:x}", callStack.CodeAddress.Address);
+                    dataOut.WriteLine("    ?!0x{0:x}", callStack.CodeAddress.Address);
 
                 callStack = callStack.Caller;
             }

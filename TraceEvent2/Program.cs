@@ -366,8 +366,8 @@ namespace TraceEvent2
             session.Dispose();
             session = new TraceEventSession(sessionName, etlFileName);
 
-            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.All);
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread);
+            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider.
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread | KernelTraceEventParser.Keywords.SystemCall, KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread | KernelTraceEventParser.Keywords.SystemCall);
 
             foreach (var provider in providerNameList)
             {
