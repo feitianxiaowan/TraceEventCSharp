@@ -12,54 +12,34 @@ using Microsoft.Diagnostics.Symbols;
 
 namespace TraceEvent2
 {
-    class CallStackParser
+    class CallStackParser: TraceLogParser
     {
-        public static TextWriter Out = Console.Out;
-        public static TextWriter logOut = new StreamWriter(new FileStream("log.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-        public static TextWriter dataOut = new StreamWriter(new FileStream("dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-
         private static SymbolPath symbolPath = new SymbolPath(SymbolPath.SymbolPathFromEnvironment).Add(SymbolPath.MicrosoftSymbolServerPath);
         private static TextWriter SymbolLookupMessages = new StringWriter();
         private static SymbolReader symbolReader = new SymbolReader(Out, symbolPath.ToString());
 
         private static TraceCodeAddress codeAddress;
 
-
-        public static void ParseLogFileWithCallStack(List<string> logFileList)
+        public CallStackParser()
         {
-            foreach (var logfile in logFileList)
+            EventParser = CallStackEventParser;
+            PreProcess = CallStackPreProcess;
+        }
+
+        protected void CallStackPreProcess()
+        {
+            foreach (var process in traceLog.Processes)
             {
-                var source = new ETWTraceEventSource(logfile);
-                if (source.EventsLost != 0)
-                    Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
-
-                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = logOut });
-
-                foreach(var process in traceLog.Processes)
+                foreach (var module in process.LoadedModules)
                 {
-                    if (process.ProcessID == 16992)
-                    {
-                        foreach (var module in process.LoadedModules)
-                        {
-                            //if (!module.ModuleFile.Name.Equals( "gdiplus")) continue;
-                            traceLog.CodeAddresses.LookupSymbolsForModule(symbolReader, module.ModuleFile);
-                        }
-                    }
+                    //if (!module.ModuleFile.Name.Equals( "gdiplus")) continue;
+                    traceLog.CodeAddresses.LookupSymbolsForModule(symbolReader, module.ModuleFile);
                 }
-
-                TraceLogEventSource logEventSource = traceLog.Events.GetSource();
-
-                logEventSource.AllEvents += ProcessCallStack;
-
-                logEventSource.Process();
             }
         }
 
-        public static void ProcessCallStack(TraceEvent data)
+        public static void CallStackEventParser(TraceEvent data)
         {
-            if (data.ProcessID != 16992)
-                return;
-
             if (data.Opcode == TraceEventOpcode.DataCollectionStart)
                 return;
 
@@ -73,24 +53,6 @@ namespace TraceEvent2
             var callStack = data.CallStack();
             while (callStack != null)
             {
-                //var codeAddress = callStack.CodeAddress;
-                //if (codeAddress.Method == null)
-                //{
-
-
-                //    var moduleFile = codeAddress.ModuleFile;
-                //    if (moduleFile == null)
-                //    {
-
-                //    }
-                //    else
-                //    {
-                //        codeAddress.CodeAddresses.LookupSymbolsForModule(symbolReader, moduleFile);
-                //        dataOut.Write(codeAddress.FullMethodName + ",");
-                //    }
-                //}
-                //callStack = callStack.Caller;
-
                 var method = callStack.CodeAddress.Method;
                 var module = callStack.CodeAddress.ModuleFile;
                 if(method != null)

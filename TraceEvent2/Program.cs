@@ -48,17 +48,16 @@ namespace TraceEvent2
 
         private static TraceEventProviderOptions enableOptions = new TraceEventProviderOptions() { StacksEnabled = false };
 
-        private static string sessionName = "apt_sessions";
+        private static EventSourceParser parser;
+
+
         private static string etlFileName = "output.etl";
 
-        private static TraceEventSession session = new TraceEventSession(sessionName);
 
         enum RunningMode : byte
         {
-            coOccurenceMatrixMode,
-            ALPCAnalysisMode,
-            ParseCallStackMode,
-            ParseMode,
+            CallStackParser,
+            ProcessSplitParser,
             Default,
         }
 
@@ -79,12 +78,16 @@ namespace TraceEvent2
                 {"c|callstack", "Enable all call stack", v => {enableOptions.StacksEnabled = true; enableCallStack = true; } },
 
                 // Parse function configuration. 
-                {"m|mode=", @"Choice an running mode. 'c' for CoOccurenceMatrix, 'a' for ALPC analysis, 's' for call stack, 'p' for parse", m => {switch(m){
-                        case "a": mode = RunningMode.ALPCAnalysisMode; break;
-                        case "p": mode = RunningMode.ParseMode; break;
-                        case "s": mode = RunningMode.ParseCallStackMode; break;
-                        case "c": mode = RunningMode.coOccurenceMatrixMode; break;
-                        default: mode = RunningMode.Default; show_help = true; break;
+                {"m|mode=", @"Choice an running mode. 'c' for CallStackParser,   'p' for ProcessSplitParser", m => {switch(m){
+                        case "p": mode = RunningMode.ProcessSplitParser;
+                                parser = new ProcessSplitParser();
+                                break;
+                        case "c": mode = RunningMode.CallStackParser;
+                                parser = new CallStackParser();
+                                break;
+                        default: mode = RunningMode.Default;
+                                parser = new EventSourceParser();
+                                show_help = true; break;
                     } } },
 
                 // Detail configuration.
@@ -123,20 +126,6 @@ namespace TraceEvent2
 #if DEBUG
             Debugger.Break();
 #endif
-            // 选择处理函数
-            AudioDetector audioDetector;
-            switch (mode)
-            {
-                case RunningMode.ParseMode:
-                    processer = TraceAnalysis.PrintPickupInfo; break;
-                //case RunningMode.ALPCAnalysisMode:
-                //    processer = ALPCAnalysis.ProcessALPC; break;
-                case RunningMode.coOccurenceMatrixMode:
-                    processer = CoOccurenceMatrix.ProcessCoOccurence; break;
-                case RunningMode.ParseCallStackMode:
-                    processer = CallStackParser.ProcessCallStack; break;
-                default: processer = AudioDetector.EventReader; break;
-            }
 
             if (print_manifest)
             {
@@ -163,21 +152,10 @@ namespace TraceEvent2
                         session.Source.StopProcessing();
                     }, null, dataCollectTime * 1000, Timeout.Infinite);
                 }
-                if (enableCallStack)
-                    ParseRealtimeWithCallStack();
-                else
-                    ParseRealtime();
+
+                parser.ParseRealTime(providerNameList);
             }
-            // Start Parse Events, if there exist logfile parameter
-            else if (logFileList.Count() != 0)
-            {
-                if (enableCallStack)
-                    CallStackParser.ParseLogFileWithCallStack(logFileList);
-                else
-                    Split.ParseLogFileWithProcessInfo(logFileList);
-            }
-            // or log file
-            else if(providerNameList.Count() != 0)
+            else if (providerNameList.Count() != 0)
             {
                 Out.WriteLine("Ctrl + c to stop collection!");
                 Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) { session.Dispose(); };
@@ -189,14 +167,17 @@ namespace TraceEvent2
                         session.Source.StopProcessing();
                     }, null, dataCollectTime * 1000, Timeout.Infinite);
                 }
-                if (enableCallStack)
-                    CollectLogFileWithCallStack();
-                else
-                    CollectLogFile();
+
+                CollectLogFile();
+            }
+            // Start Parse Events, if there exist logfile parameter
+            else if (logFileList.Count() != 0)
+            {
+                parser.ParseLogFile(logFileList);
             }
 
+           
 
-            WindUp();
 #if DEBUG
             Debugger.Break();
 #endif
@@ -242,12 +223,6 @@ namespace TraceEvent2
             fs.Close();
         }
 
-        private static void PrintAllManifest()
-        {
-            // list all registered proviers in the system
-            
-        }
-
         private static void ReadInProviderList(string listName)
         {
             TextReader dataIn;
@@ -273,12 +248,6 @@ namespace TraceEvent2
             }
         }
 
-        private static void WindUp()
-        {
-            //TraceAnalysis.PrintStatisticInfo();
-            //CoOccurenceMatrix.PrintCoOccurenceMatrix();
-        }
-
         private static void SetDataOut(string outputPath)
         {
             try
@@ -292,68 +261,9 @@ namespace TraceEvent2
             }
         }
 
-        private static void ParseRealtime()
-        {
-            session.Dispose();
-            session = new TraceEventSession(sessionName);
 
-            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
-
-            session.Source.AllEvents += ProcessData;
-
-            foreach (var provider in providerNameList)
-            {
-                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
-            }
-
-            session.Source.Process();
-        }
-
-        private static void ParseRealtimeWithCallStack()
-        {
-            session.Dispose();
-            session = new TraceEventSession(sessionName);
-
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
-
-            TraceLogEventSource traceLogSource = TraceLog.CreateFromTraceEventSession(session);
-
-            traceLogSource.AllEvents += ProcessData;
-
-            foreach (var provider in providerNameList)
-            {
-                session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
-            }
-
-            session.Source.Process();
-        }
-
-        private static void ParseLogFile()
-        {
-            foreach (var logfile in logFileList)
-            {
-                var source = new ETWTraceEventSource(logfile);
-                if (source.EventsLost != 0)
-                    Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
-
-                // Set up callbacks to 
-                source.Clr.All += ProcessData;
-                source.Kernel.All += ProcessData;
-
-                        source.Kernel.ALPCReceiveMessage += ALPCAnalysis.ProcessALPCRecieve;
-                        source.Kernel.ALPCSendMessage += ALPCAnalysis.ProcessALPCSend;
-                        source.Kernel.ProcessDCStart += ProcessAnalysis.ProcessProcess;
-                        source.Kernel.ProcessStart += ProcessAnalysis.ProcessProcess;
-
-                var symbolParser = new RegisteredTraceEventParser(source);
-                symbolParser.All += ProcessData;
-
-                source.Process();
-                Out.WriteLine("Done Processing.");
-                
-            }
-        }
-
+        private static string sessionName = "apt_sessions";
+        private static TraceEventSession session = new TraceEventSession(sessionName);
 
         private static void CollectLogFile()
         {
@@ -366,7 +276,9 @@ namespace TraceEvent2
             session.Dispose();
             session = new TraceEventSession(sessionName, etlFileName);
 
-            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider.
+            if(enableOptions.StacksEnabled)
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider.
+
             session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread );
 
             foreach (var provider in providerNameList)
@@ -384,47 +296,6 @@ namespace TraceEvent2
             else Thread.Sleep(dataCollectTime * 1000);
         }
 
-        private static void CollectLogFileWithCallStack()
-        {
-            if (TraceEventSession.IsElevated() != true)
-            {
-                Out.WriteLine("Must be elevated (Admin) to run this program.");
-                Debugger.Break();
-                return;
-            }
-            session.Dispose();
-            session = new TraceEventSession(sessionName, etlFileName);
-
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider
-
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread);
-
-            foreach (var provider in providerNameList)
-            {
-                try
-                {
-                    session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
-                }
-                catch
-                {
-                    logOut.WriteLine(provider);
-                }
-            }
-            if (dataCollectTime == 0) Thread.Sleep(int.MaxValue);
-            else Thread.Sleep(dataCollectTime * 1000);
-        }
-
-        public delegate void ProcessDataDel(TraceEvent data);
-        public static ProcessDataDel processer = Print;
-
-        private static void ProcessData(TraceEvent data)
-        {
-            if (Filter(data))
-                return;
-
-            processer(data);
-        }
-
         private static bool Filter(TraceEvent data)
         {
             if (!processWhiteListFlag) return false;
@@ -438,31 +309,6 @@ namespace TraceEvent2
             }
         }
 
-        private static void Print(TraceEvent data)
-        {
-            // There are a lot of data collection start on entry that I don't want to see (but often they are quite handy
-//            if (data.Opcode == TraceEventOpcode.DataCollectionStart)
- //               return;
 
-            //Out.WriteLine(data.ToXml(new StringBuilder()).ToString());
-            dataOut.WriteLine(data.ToString());
-            if (data is UnhandledTraceEvent)
-                dataOut.WriteLine(data.Dump());
-
-            var callStack = data.CallStack();
-            if(callStack != null)
-            {
-                var codeAddress = callStack.CodeAddress;
-                if(codeAddress.Method == null)
-                {
-                    var moduleFile = codeAddress.ModuleFile;
-                    if(moduleFile == null)
-                    {
-                        
-                    }
-                }
-            }
-
-        }
     }
 }
