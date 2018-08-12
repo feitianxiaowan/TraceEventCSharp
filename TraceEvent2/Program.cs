@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -174,7 +174,7 @@ namespace TraceEvent2
                 if (enableCallStack)
                     CallStackParser.ParseLogFileWithCallStack(logFileList);
                 else
-                    ParseLogFile();
+                    Split.ParseLogFileWithProcessInfo(logFileList);
             }
             // or log file
             else if(providerNameList.Count() != 0)
@@ -367,7 +367,7 @@ namespace TraceEvent2
             session = new TraceEventSession(sessionName, etlFileName);
 
             //session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider.
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread | KernelTraceEventParser.Keywords.SystemCall, KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread | KernelTraceEventParser.Keywords.SystemCall);
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread );
 
             foreach (var provider in providerNameList)
             {
@@ -386,7 +386,32 @@ namespace TraceEvent2
 
         private static void CollectLogFileWithCallStack()
         {
-            CollectLogFile();
+            if (TraceEventSession.IsElevated() != true)
+            {
+                Out.WriteLine("Must be elevated (Admin) to run this program.");
+                Debugger.Break();
+                return;
+            }
+            session.Dispose();
+            session = new TraceEventSession(sessionName, etlFileName);
+
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider
+
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread);
+
+            foreach (var provider in providerNameList)
+            {
+                try
+                {
+                    session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+                }
+                catch
+                {
+                    logOut.WriteLine(provider);
+                }
+            }
+            if (dataCollectTime == 0) Thread.Sleep(int.MaxValue);
+            else Thread.Sleep(dataCollectTime * 1000);
         }
 
         public delegate void ProcessDataDel(TraceEvent data);

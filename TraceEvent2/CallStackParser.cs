@@ -15,6 +15,7 @@ namespace TraceEvent2
     class CallStackParser
     {
         public static TextWriter Out = Console.Out;
+        public static TextWriter logOut = new StreamWriter(new FileStream("log.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
         public static TextWriter dataOut = new StreamWriter(new FileStream("dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
         private static SymbolPath symbolPath = new SymbolPath(SymbolPath.SymbolPathFromEnvironment).Add(SymbolPath.MicrosoftSymbolServerPath);
@@ -32,7 +33,7 @@ namespace TraceEvent2
                 if (source.EventsLost != 0)
                     Out.WriteLine("WARNING: there were {0} lost events", source.EventsLost);
 
-                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = Out });
+                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = logOut });
 
                 foreach(var process in traceLog.Processes)
                 {
