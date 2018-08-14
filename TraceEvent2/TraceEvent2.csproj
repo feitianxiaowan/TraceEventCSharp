@@ -81,11 +81,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioDetector.cs" />
-    <Compile Include="CoOccurenceMatrix.cs" />
-    <Compile Include="EventSourceParser.cs" />
-    <Compile Include="ProcessSplitParser.cs" />
-    <Compile Include="TraceAnalysis.cs" />
+    <Compile Include="Ngram.cs" />
+    <Compile Include="Parser\EventSourceParser.cs" />
+    <Compile Include="Parser\ProcessSplitParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TraceEventSamples\00_AllSamples.cs" />
@@ -104,7 +102,7 @@
     <Compile Include="TraceEventSamples\41_TraceLogMonitor.cs" />
     <Compile Include="TraceEventSamples\50_SimpleFileRelogger.cs" />
     <Compile Include="TraceEventSamples\51_SimpleMonitorRelogger.cs" />
-    <Compile Include="CallStackParser.cs" />
+    <Compile Include="Parser\CallStackParser.cs" />
     <Compile Include="TraceEventSamples\SupportFiles\EventProducer.cs" />
   </ItemGroup>
   <ItemGroup>
