@@ -34,7 +34,7 @@ namespace TraceEvent2
         // Two Interface
         protected ETWTraceEventSource source;
 
-        public void ParseLogFile(List<string> logFileList)
+        public virtual void ParseLogFile(List<string> logFileList)
         {
             foreach (var logfile in logFileList)
             {
@@ -92,11 +92,11 @@ namespace TraceEvent2
         }
 
         // Two Interface
-        public void ParseLogFile(List<string> logFileList)
+        public override void ParseLogFile(List<string> logFileList)
         {
             foreach (var logfile in logFileList)
             {
-                var traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = logOut });
+                traceLog = TraceLog.OpenOrConvert(logfile, new TraceLogOptions() { ConversionLog = logOut });
                 if (traceLog.EventsLost != 0)
                     Out.WriteLine("WARNING: there were {0} lost events", traceLog.EventsLost);
 

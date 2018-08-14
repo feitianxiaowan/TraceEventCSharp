@@ -174,6 +174,7 @@ namespace TraceEvent2
             else if (logFileList.Count() != 0)
             {
                 parser.ParseLogFile(logFileList);
+                parser.StartProcess();
             }
 
            

@@ -27,7 +27,7 @@ namespace TraceEvent2
 
                 if (!outputChannls.ContainsKey(process.ProcessID))
                 {
-                    outputChannls.Add(process.ProcessID, new StreamWriter(new FileStream(process.Name + process.ProcessID + ".pkinfo", FileMode.OpenOrCreate, FileAccess.ReadWrite)));
+                    outputChannls.Add(process.ProcessID, new StreamWriter(new FileStream(process.Name + "_" + process.ProcessID + ".pkinfo", FileMode.OpenOrCreate, FileAccess.ReadWrite)));
                 }
 
                 foreach (var data in process.EventsInProcess)
