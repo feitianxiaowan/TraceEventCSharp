@@ -175,6 +175,7 @@ namespace TraceEvent2
             {
                 parser.ParseLogFile(logFileList);
                 parser.StartProcess();
+                parser.Windup();
             }
 
            

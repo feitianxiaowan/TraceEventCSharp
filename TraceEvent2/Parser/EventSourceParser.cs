@@ -47,10 +47,15 @@ namespace TraceEvent2
             }
         }
 
-        public void StartProcess()
+        public virtual void StartProcess()
         {
             source.Process();
             Out.WriteLine("Done Processing.");
+        }
+
+        public virtual void Windup()
+        {
+
         }
 
         // RealTime
@@ -59,7 +64,7 @@ namespace TraceEvent2
 
         protected static TraceEventProviderOptions enableOptions = new TraceEventProviderOptions() { StacksEnabled = false };
 
-        public void ParseRealTime(List<string> providerNameList)
+        public virtual void ParseRealTime(List<string> providerNameList)
         {
             session.Dispose();
             session = new TraceEventSession(sessionName);
@@ -108,7 +113,7 @@ namespace TraceEvent2
             }
         }
 
-        public void StartProcess()
+        public override void StartProcess()
         {
             logEventSource.Process();
             Out.WriteLine("Done Processing.");
@@ -116,7 +121,7 @@ namespace TraceEvent2
 
         // Real Time
 
-        private void ParseTraceLogRealtime(List<string> providerNameList)
+        public override void ParseRealTime(List<string> providerNameList)
         {
             session.Dispose();
             session = new TraceEventSession(sessionName);

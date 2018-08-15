@@ -14,6 +14,9 @@ namespace TraceEvent2
         private static Dictionary<int, string> processID2Name = new Dictionary<int, string>();
         private static Dictionary<int, TextWriter> outputChannls = new Dictionary<int, TextWriter>();
 
+        //Ngram ngram = new Ngram();
+        private static Dictionary<int, Ngram> ngramPerProcess = new Dictionary<int, Ngram>();
+
         public ProcessSplitParser()
         {
             PreProcess = ProcessSplitPreProcess;
@@ -30,12 +33,20 @@ namespace TraceEvent2
                     outputChannls.Add(process.ProcessID, new StreamWriter(new FileStream(process.Name + "_" + process.ProcessID + ".pkinfo", FileMode.OpenOrCreate, FileAccess.ReadWrite)));
                 }
 
+                Ngram tempNgram = new Ngram();
                 foreach (var data in process.EventsInProcess)
                 {
-                    outputChannls[process.ProcessID].WriteLine(data.ToString());
+                    //outputChannls[process.ProcessID].WriteLine(data.ToString());
+                    tempNgram.Counter(NgramCal(data));
                 }
+                tempNgram.PrintCounterResult(outputChannls[process.ProcessID]);
+                outputChannls[process.ProcessID].Flush();
             }
         }
 
+        protected string NgramCal(TraceEvent data)
+        {
+            return data.EventName;
+        }
     }
 }

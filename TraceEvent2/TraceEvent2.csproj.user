@@ -6,4 +6,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <StartArguments>--logfile=output.etl</StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <StartArguments>--logfile=C:\Users\xiaowan\Documents\Git\TraceEventCSharp\TraceEvent2\bin\Debug\output.etl --mode=p</StartArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <StartArguments>--logfile=output.etl</StartArguments>
+  </PropertyGroup>
 </Project>
