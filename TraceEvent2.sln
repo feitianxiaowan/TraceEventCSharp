@@ -9,14 +9,20 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		Release(Collect)|Any CPU = Release(Collect)|Any CPU
+		Release(Collect)|x64 = Release(Collect)|x64
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|x64.ActiveCfg = Debug|x64
-		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|x64.Build.0 = Debug|x64
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|x64.ActiveCfg = Release|x64
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Debug|x64.Build.0 = Release|x64
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release(Collect)|Any CPU.ActiveCfg = Release(Collect)|Any CPU
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release(Collect)|Any CPU.Build.0 = Release(Collect)|Any CPU
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release(Collect)|x64.ActiveCfg = Release(Collect)|x64
+		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release(Collect)|x64.Build.0 = Release(Collect)|x64
 		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EAF5ADA4-118D-4888-BCE1-0B9DE487A6A5}.Release|x64.ActiveCfg = Release|x64
