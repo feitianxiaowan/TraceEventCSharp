@@ -20,13 +20,15 @@ namespace TraceEvent2
         public ProcessSplitParser()
         {
             PreProcess = ProcessSplitPreProcess;
+            EventParser = ProcessSplitEventParser;
         }
 
         protected void ProcessSplitPreProcess()
         {
             foreach (var process in traceLog.Processes)
             {
-                processID2Name.Add(process.ProcessID, process.Name);
+                if (!processID2Name.ContainsKey(process.ProcessID)) 
+                    processID2Name.Add(process.ProcessID, process.Name);
 
                 if (!outputChannls.ContainsKey(process.ProcessID))
                 {
@@ -36,12 +38,23 @@ namespace TraceEvent2
                 Ngram tempNgram = new Ngram();
                 foreach (var data in process.EventsInProcess)
                 {
-                    //outputChannls[process.ProcessID].WriteLine(data.ToString());
-                    tempNgram.Counter(NgramCal(data));
+                    if (data.ProviderName == "Windows Kernel") continue;
+
+                    if (data.ProviderGuid == new Guid("2cb15d1d-5fc1-11d2-abe1-00a0c911f518"))
+                        continue;
+                    if (data.ProviderGuid == new Guid("9e814aad-3204-11d2-9a82-006008a86939"))
+                        continue;
+                    outputChannls[process.ProcessID].WriteLine(PrintInfo.PickupInfo(data));
+                    //tempNgram.Counter(NgramCal(data));
                 }
                 tempNgram.PrintCounterResult(outputChannls[process.ProcessID]);
                 outputChannls[process.ProcessID].Flush();
             }
+        }
+
+        protected void ProcessSplitEventParser(TraceEvent data)
+        {
+
         }
 
         protected string NgramCal(TraceEvent data)
