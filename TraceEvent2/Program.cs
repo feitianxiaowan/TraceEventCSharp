@@ -85,6 +85,7 @@ namespace TraceEvent2
                         case "c": mode = RunningMode.CallStackParser;
                                 parser = new CallStackParser();
                                 break;
+                        case "d":
                         default: mode = RunningMode.Default;
                                 parser = new EventSourceParser();
                                 show_help = true; break;
@@ -281,13 +282,13 @@ namespace TraceEvent2
             if(enableOptions.StacksEnabled)
             session.EnableKernelProvider(KernelTraceEventParser.Keywords.All, KernelTraceEventParser.Keywords.All); // Enable all call stack for Kernel Provider.
 
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread );
+            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad | KernelTraceEventParser.Keywords.Process | KernelTraceEventParser.Keywords.Thread );
 
             foreach (var provider in providerNameList)
             {
                 try
                 {
-                    session.EnableProvider(provider, TraceEventLevel.Always, ulong.MaxValue, enableOptions);
+                    session.EnableProvider(provider, TraceEventLevel.Verbose, ulong.MaxValue, enableOptions);
                 }
                 catch
                 {

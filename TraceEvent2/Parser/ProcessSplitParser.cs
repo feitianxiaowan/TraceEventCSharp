@@ -44,7 +44,8 @@ namespace TraceEvent2
                         continue;
                     if (data.ProviderGuid == new Guid("9e814aad-3204-11d2-9a82-006008a86939"))
                         continue;
-                    outputChannls[process.ProcessID].WriteLine(PrintInfo.PickupInfo(data));
+                    //outputChannls[process.ProcessID].WriteLine(PrintInfo.PickupInfo(data));
+                    outputChannls[process.ProcessID].WriteLine(data.ToString());
                     //tempNgram.Counter(NgramCal(data));
                 }
                 tempNgram.PrintCounterResult(outputChannls[process.ProcessID]);

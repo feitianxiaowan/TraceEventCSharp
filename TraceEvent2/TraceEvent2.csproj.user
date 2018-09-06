@@ -10,7 +10,7 @@
     <StartArguments>--logfile=output.etl --mode=p</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <StartArguments>--logfile=output.etl --mode=p</StartArguments>
+    <StartArguments>--logfile=output.etl --mode=d</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release%28Collect%29|AnyCPU'">
     <StartArguments>--logfile=output.etl</StartArguments>
