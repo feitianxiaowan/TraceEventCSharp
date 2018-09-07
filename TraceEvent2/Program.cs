@@ -70,6 +70,11 @@ namespace TraceEvent2
             bool enableCallStack = false;
 
             RunningMode mode = RunningMode.Default;
+            Out.WriteLine("");
+
+#if DEBUG
+            Debugger.Break();
+#endif
 
             var commandLineParser = new OptionSet()
             {
@@ -85,10 +90,13 @@ namespace TraceEvent2
                         case "c": mode = RunningMode.CallStackParser;
                                 parser = new CallStackParser();
                                 break;
+                        case "s": parser = new PowershellParser();
+                                break;
                         case "d":
                         default: mode = RunningMode.Default;
                                 parser = new EventSourceParser();
-                                show_help = true; break;
+                                //show_help = true; 
+                                break;
                     } } },
 
                 // Detail configuration.

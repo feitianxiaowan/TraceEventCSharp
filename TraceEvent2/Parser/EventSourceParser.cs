@@ -126,11 +126,12 @@ namespace TraceEvent2
             session.Dispose();
             session = new TraceEventSession(sessionName);
 
-            session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
+            //session.EnableKernelProvider(KernelTraceEventParser.Keywords.ImageLoad);
 
             TraceLogEventSource traceLogSource = TraceLog.CreateFromTraceEventSession(session);
 
-            traceLogSource.AllEvents += ProcessData;
+            //traceLogSource.AllEvents += ProcessData;
+            traceLogSource.Dynamic.All += ProcessData;
 
             foreach (var provider in providerNameList)
             {
