@@ -31,7 +31,7 @@ namespace TraceEvent2
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                Out.WriteLine(processId + ";" + sample.Replace("\r\n",";"));
+                dataOut.WriteLine(processId + ";" + sample.Replace("\r\n",";"));
                 //string result = detector.Match(sample);
                 //if (result == null)
                 //    return;
