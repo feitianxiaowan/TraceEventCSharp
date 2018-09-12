@@ -151,7 +151,7 @@ namespace TraceEvent2
                     Debugger.Break();
                     return;
                 }
-                Out.WriteLine("Ctrl + c to stop collection!");
+                //Out.WriteLine("Ctrl + c to stop collection!");
                 Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) { session.Dispose(); };
                 if (dataCollectTime != 0)
                 {

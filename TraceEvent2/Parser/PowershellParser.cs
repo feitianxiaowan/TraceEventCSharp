@@ -11,6 +11,8 @@ namespace TraceEvent2
 {
     class PowershellParser : TraceLogParser
     {
+        protected MalPowershellScriptDetector detector = new MalPowershellScriptDetector();
+
         public PowershellParser()
         {
             EventParser = PowershellEventParser;
@@ -27,7 +29,14 @@ namespace TraceEvent2
             //Out.WriteLine(data.ToString());
             if (data.ID.ToString() == "4104")
             {
-                Out.WriteLine(data.PayloadByName("ScriptBlockText"));
+                string sample = data.PayloadByName("ScriptBlockText").ToString();
+                Out.WriteLine(sample);
+                string result = detector.Match(sample);
+                if (result == null)
+                    return;
+                Out.WriteLine("Someting wrong here!");
+                Out.WriteLine(result);
+
                 //Out.WriteLine(data.FormattedMessage);
             }
 
