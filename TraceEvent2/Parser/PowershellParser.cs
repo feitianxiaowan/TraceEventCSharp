@@ -30,12 +30,13 @@ namespace TraceEvent2
             if (data.ID.ToString() == "4104")
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
-                Out.WriteLine(sample);
-                string result = detector.Match(sample);
-                if (result == null)
-                    return;
-                Out.WriteLine("Someting wrong here!");
-                Out.WriteLine(result);
+                string processId = data.ProcessID.ToString();
+                Out.WriteLine(processId + ";" + sample.Replace("\r\n",";"));
+                //string result = detector.Match(sample);
+                //if (result == null)
+                //    return;
+                //Out.WriteLine("Someting wrong here!");
+                //Out.WriteLine(result);
 
                 //Out.WriteLine(data.FormattedMessage);
             }
