@@ -3,6 +3,7 @@ using Microsoft.Diagnostics.Tracing.Parsers;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,14 @@ namespace TraceEvent2
 
         public PowershellParser()
         {
+            string dumpfilePath = "powershell_dumpfile.txt";
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), dumpfilePath)))
+            {
+                File.Delete(Path.Combine(Directory.GetCurrentDirectory(), dumpfilePath));
+            }
+
             EventParser = PowershellEventParser;
+
         }
 
         protected void PowershellEventParser(TraceEvent data)
@@ -31,7 +39,12 @@ namespace TraceEvent2
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                dataOut.WriteLine(processId + ";" + sample.Replace("\r\n",";"));
+                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStampRelativeMSec + ";" + sample.Replace("\r\n", ";"));
+
+                TextWriter dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
+                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStampRelativeMSec + ";" + sample.Replace("\r\n", ";"));
+                dataOut.Flush();
+                dataOut.Close();
                 //string result = detector.Match(sample);
                 //if (result == null)
                 //    return;
