@@ -39,10 +39,10 @@ namespace TraceEvent2
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStampRelativeMSec + ";" + sample.Replace("\r\n", ";"));
+                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStamp + ";" + sample.Replace("\r\n", ";"));
 
                 TextWriter dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStampRelativeMSec + ";" + sample.Replace("\r\n", ";"));
+                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStamp + ";" + sample.Replace("\r\n", ";"));
                 dataOut.Flush();
                 dataOut.Close();
                 //string result = detector.Match(sample);
