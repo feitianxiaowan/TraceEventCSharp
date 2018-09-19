@@ -14,6 +14,8 @@ namespace TraceEvent2
     {
         protected MalPowershellScriptDetector detector = new MalPowershellScriptDetector();
 
+        DateTime defaultTime = Convert.ToDateTime("1970-1-1 00:00:00");
+
         public PowershellParser()
         {
             string dumpfilePath = "powershell_dumpfile.txt";
@@ -39,10 +41,11 @@ namespace TraceEvent2
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStamp + ";" + sample.Replace("\r\n", ";"));
+                TimeSpan ts = data.TimeStamp.Subtract(defaultTime).Duration();
 
+                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", ";"));
                 TextWriter dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + data.TimeStamp + ";" + sample.Replace("\r\n", ";"));
+                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", ";"));
                 dataOut.Flush();
                 dataOut.Close();
                 //string result = detector.Match(sample);
