@@ -26,7 +26,7 @@ namespace TraceEvent2
             var f = File.Create("powershell_dumpfile.txt");
             f.Close();
             EventParser = PowershellEventParser;
-
+            dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
         }
 
         protected void PowershellEventParser(TraceEvent data)
@@ -47,12 +47,11 @@ namespace TraceEvent2
                 String timeStamp = ts.TotalMilliseconds.ToString("F4");
                 timeStamp=timeStamp.Replace(".", "");
                 timeStamp += "00";
-                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", "#").Replace(";", "#"));
-                TextWriter dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", "#").Replace(";", "#"));
-
+                String temp = processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", " ").Replace(";", " ");
+                Out.WriteLine(temp);
+                
+                dataOut.WriteLine(temp);
                 dataOut.Flush();
-                dataOut.Close();
                 //string result = detector.Match(sample);
                 //if (result == null)
                 //    return;
