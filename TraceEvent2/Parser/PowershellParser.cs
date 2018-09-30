@@ -43,9 +43,9 @@ namespace TraceEvent2
                 string processId = data.ProcessID.ToString();
                 TimeSpan ts = data.TimeStamp.Subtract(defaultTime).Duration();
 
-                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", ";"));
+                Out.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", "#").Replace(";", "#"));
                 TextWriter dataOut = new StreamWriter(new FileStream("powershell_dumpfile.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", ";"));
+                dataOut.WriteLine(processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", "#").Replace(";", "#"));
                 dataOut.Flush();
                 dataOut.Close();
                 //string result = detector.Match(sample);
