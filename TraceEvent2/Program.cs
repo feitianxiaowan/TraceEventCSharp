@@ -21,6 +21,7 @@ using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Diagnostics.Symbols;
 
 using TraceEvent2;
+using TraceEvent2.DIFT;
 
 /*
 Out.WriteLine(@"TraceEvent2.exe --providerList=provider_list.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");
@@ -63,6 +64,8 @@ namespace TraceEvent2
 
         static void Main(string[] args)
         {
+            // temp_test();
+
             // Parse CommandLine Arguments
             bool show_help = false;
             bool real_time = false;
@@ -193,6 +196,12 @@ namespace TraceEvent2
             Debugger.Break();
 #endif
             return;
+        }
+
+        private static void temp_test()
+        {
+            ControlFlowGraph temp = new ControlFlowGraph();
+            temp.test();
         }
 
         private static void ShowHelp(OptionSet p)
