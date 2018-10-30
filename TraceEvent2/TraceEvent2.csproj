@@ -149,12 +149,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DIFT\ControlFlowGraph.cs" />
-    <Compile Include="MalPowershellScriptDetector.cs" />
-    <Compile Include="Ngram.cs" />
+    <Compile Include="Detector\MalPowershellScriptDetector.cs" />
+    <Compile Include="Parser\SystemObjectParser.cs" />
+    <Compile Include="SupportFunction\Ngram.cs" />
     <Compile Include="Parser\EventSourceParser.cs" />
     <Compile Include="Parser\PowershellParser.cs" />
     <Compile Include="Parser\ProcessSplitParser.cs" />
-    <Compile Include="PrintInfo.cs" />
+    <Compile Include="SupportFunction\PrintInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TraceEventSamples\00_AllSamples.cs" />

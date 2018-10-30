@@ -22,6 +22,7 @@ using Microsoft.Diagnostics.Symbols;
 
 using TraceEvent2;
 using TraceEvent2.DIFT;
+using TraceEvent2.Parser;
 
 /*
 Out.WriteLine(@"TraceEvent2.exe --providerList=provider_list.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");
@@ -94,6 +95,8 @@ namespace TraceEvent2
                                 parser = new CallStackParser();
                                 break;
                         case "s": parser = new PowershellParser();
+                                break;
+                        case "o": parser = new SystemObjectParser();
                                 break;
                         case "d":
                         default: mode = RunningMode.Default;

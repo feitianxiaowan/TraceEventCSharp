@@ -42,12 +42,12 @@ namespace TraceEvent2
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                TimeSpan ts = data.TimeStamp.Subtract(defaultTime).Duration();
+                //TimeSpan ts = data.TimeStamp.Subtract(defaultTime).Duration();
 
-                String timeStamp = ts.TotalMilliseconds.ToString("F4");
-                timeStamp=timeStamp.Replace(".", "");
-                timeStamp += "00";
-                String temp = processId + ";" + data.ThreadID.ToString() + ";" + ts.TotalMilliseconds + "000" + ";" + sample.Replace("\r\n", " ").Replace(";", " ");
+                //String timeStamp = ts.TotalMilliseconds.ToString("F4");
+                //timeStamp=timeStamp.Replace(".", "");
+                //timeStamp += "00";
+                String temp = processId + "#" + data.ThreadID.ToString() + "#" + data.TimeStamp + "#" + sample;
                 Out.WriteLine(temp);
                 
                 dataOut.WriteLine(temp);
