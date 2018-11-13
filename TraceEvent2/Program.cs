@@ -100,7 +100,7 @@ namespace TraceEvent2
                                 break;
                         case "d":
                         default: mode = RunningMode.Default;
-                                parser = new EventSourceParser();
+                                parser = new TraceLogParser();
                                 //show_help = true; 
                                 break;
                     } } },
