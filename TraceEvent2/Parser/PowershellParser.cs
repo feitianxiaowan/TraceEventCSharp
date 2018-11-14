@@ -37,21 +37,26 @@ namespace TraceEvent2
             //    Out.WriteLine(data.PayloadByName(payloadName));
             //}
 
-            //Out.WriteLine(data.ToString());
+
             if (data.ID.ToString() == "4104")
             {
                 string sample = data.PayloadByName("ScriptBlockText").ToString();
                 string processId = data.ProcessID.ToString();
-                //TimeSpan ts = data.TimeStamp.Subtract(defaultTime).Duration();
 
-                //String timeStamp = ts.TotalMilliseconds.ToString("F4");
-                //timeStamp=timeStamp.Replace(".", "");
-                //timeStamp += "00";
                 String temp = processId + "#" + data.ThreadID.ToString() + "#" + data.TimeStamp + "#" + sample;
                 Out.WriteLine(temp);
-                
+
                 dataOut.WriteLine(temp);
                 dataOut.Flush();
+
+                /* Call ASTParser & PowershellInstance here */
+                /* ASTParser will return all the part we need */
+                /* == "$wc = &('Ne'+'w-'+'obje'+'ct') system.net.webclient; $wc.downloadstring((('C:c'+("{1}{0}" -f 'Users','rf')+'crf'+'Zh'+("{1}{0}" -f'ua','eny')+("{0}{1}" -f'n L','i')+'c'+("{1}{0}"-f'Docu','rf')+("{2}{0}{1}"-f 'tscr','f','men')+'G'+'i'+("{2}{5}{0}{1}{4}{3}" -f'fInvoke-Obfu','sc','t','ionc','at','Hubcr')+("{0}{2}{1}"-f'rfL','E','ICENS')) -rEPlACe'crf',[ChaR]92))" -> 
+                 * "&('Ne'+'w-'+'obje'+'ct') system.net.webclient;"
+                 * "$wc.downloadstring((('C:c'+("{1}{0}" -f 'Users','rf')+'crf'+'Zh'+("{1}{0}" -f'ua','eny')+("{0}{1}" -f'n L','i')+'c'+("{1}{0}"-f'Docu','rf')+("{2}{0}{1}"-f 'tscr','f','men')+'G'+'i'+("{2}{5}{0}{1}{4}{3}" -f'fInvoke-Obfu','sc','t','ionc','at','Hubcr')+("{0}{2}{1}"-f'rfL','E','ICENS')) -rEPlACe'crf',[ChaR]92))" */
+                /* Then we need to connect the new output from PowershellInstance and the origin Powershell script */
+                /* == "&('Ne'+'w-'+'obje'+'ct') system.net.webclient;" -> "new-object system.net.webclient" */
+
                 //string result = detector.Match(sample);
                 //if (result == null)
                 //    return;

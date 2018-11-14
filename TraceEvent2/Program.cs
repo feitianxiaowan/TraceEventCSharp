@@ -23,6 +23,7 @@ using Microsoft.Diagnostics.Symbols;
 using TraceEvent2;
 using TraceEvent2.DIFT;
 using TraceEvent2.Parser;
+using TraceEvent2.PowerShellInteract;
 
 /*
 Out.WriteLine(@"TraceEvent2.exe --providerList=provider_list.txt --callstack // 抓取包含call stack的指定provider的数据，并存储到默认位置(output.etl)");

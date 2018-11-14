@@ -8,11 +8,18 @@ using System.Management.Automation;
 using System.Management.Automation.Language;
 using System.Collections.ObjectModel;
 
-namespace PowerShellInteract
+namespace TraceEvent2.PowerShellInteract
 {
     class PowershellInstance
     {
+        PowerShell psInstance = PowerShell.Create();
+
         public PowershellInstance()
+        {
+
+        }
+
+        public void TestDetection()
         {
             PowerShell PowershellInstance = PowerShell.Create();
             PowershellInstance.AddScript("param($param1) $d = get-date; $s = 'test string value'; " +
@@ -23,6 +30,9 @@ namespace PowerShellInteract
             {
 
             }
+#if DEBUG
+            System.Diagnostics.Debugger.Break();
+#endif
         }
 
     }
