@@ -28,7 +28,10 @@ namespace TraceEvent2
         }
         private static void Print(TraceEvent data)
         {
-            Out.WriteLine(data.ToString());
+            //Out.WriteLine(data.ToString());
+            Out.WriteLine(data.ToXml(new StringBuilder()));
+            dataOut.WriteLine(data.ToXml(new StringBuilder()));
+            dataOut.Flush();
         }
 
         // Two Interface
