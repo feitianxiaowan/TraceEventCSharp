@@ -22,9 +22,17 @@ namespace TraceEvent2.PowerShellInteract
             var funcAst = sb.FindAll(delegate (Ast t) { return t is System.Management.Automation.Language.FunctionDefinitionAst; }, true);
 
 
-            AstVisitor treeWalker = new AstVisitor();
-            sb.Visit()
- 
+            //FindAllVisitor treeWalker = new FindAllVisitor();
+            //sb.Visit(treeWalker);
+
+        }
+    }
+
+    class FindAllVisitor : AstVisitor
+    {
+        void Initialize(Ast ast)
+        {
+
         }
     }
 }
