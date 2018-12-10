@@ -15,3 +15,5 @@ packages/
 *.vsps
 PowershellInteract/obj/
 PowershellInteract/bin/
+*.pyc
+Detection/env/Lib/

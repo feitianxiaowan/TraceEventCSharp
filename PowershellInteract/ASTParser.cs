@@ -55,6 +55,14 @@ namespace TraceEvent2.PowerShellInteract
             else if (ast is FunctionMemberAst && (ast as FunctionMemberAst).Parameters != null)
                 visitor.VisitParameters((ast as FunctionDefinitionAst).Parameters);
 
+            List<string> commandList = new List<string>();
+            foreach(var command in visitor.commandAstList)
+            {
+                string commandString = command.Extent.ToString();
+                commandString = commandString.ToLower();
+                commandList.Add(commandString);
+            }
+
             return;
         }
 
