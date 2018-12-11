@@ -11,7 +11,16 @@ namespace TraceEvent2.PowerShellInteract
     {
         String sampleScript;
 
-        public ASTParser(String sampleScript) => this.sampleScript = sampleScript;
+        private List<Ast> commandAstList = new List<Ast>();
+
+        public ASTParser()
+        {
+
+        }
+        public ASTParser(String sampleScript)
+        {
+            this.sampleScript = sampleScript;
+        }
 
         public void Parser()
         {
@@ -22,11 +31,17 @@ namespace TraceEvent2.PowerShellInteract
             //var funcAst = sb.FindAll(delegate (Ast t) { return t is System.Management.Automation.Language.FunctionDefinitionAst; }, true);
 
             FindAllVisitor treeWalker = new FindAllVisitor();
-            FindAllVisitor.Visit(sb);
+            command treeWalker.Visit(sb);
 
 #if DEBUG
             System.Diagnostics.Debugger.Break();
 #endif
+        }
+
+        public void Parser(String sampleScript)
+        {
+            this.sampleScript = sampleScript;
+            return Parser();
         }
     }
 
@@ -39,7 +54,7 @@ namespace TraceEvent2.PowerShellInteract
 
         }
 
-        public static void Visit(Ast ast)
+        public List<Ast> Visit(Ast ast)
         {
             if (!(ast is ScriptBlockAst || ast is FunctionMemberAst || ast is FunctionDefinitionAst))
             {
@@ -61,9 +76,10 @@ namespace TraceEvent2.PowerShellInteract
                 string commandString = command.Extent.ToString();
                 commandString = commandString.ToLower();
                 commandList.Add(commandString);
+                Console.Out.WriteLine(commandString);
             }
 
-            return;
+            return commandAstList;
         }
 
         internal void VisitParameters(IReadOnlyCollection<ParameterAst> parameters)

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerShellInteract", "Power
 EndProject
 Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "PowerShellAST", "PowerShellAST\PowerShellAST.pssproj", "{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Detection", "Detection\Detection.pyproj", "{D72FCC24-C905-443C-AB11-BC53712B0D89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,12 @@ Global
 		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|x64.ActiveCfg = Release|Any CPU
 		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|x64.Build.0 = Release|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Release(Collect)|Any CPU.ActiveCfg = Release|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Release(Collect)|x64.ActiveCfg = Release|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D72FCC24-C905-443C-AB11-BC53712B0D89}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
