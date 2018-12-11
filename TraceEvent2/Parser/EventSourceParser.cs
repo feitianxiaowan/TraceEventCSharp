@@ -29,9 +29,18 @@ namespace TraceEvent2
         private static void Print(TraceEvent data)
         {
             //Out.WriteLine(data.ToString());
-            Out.WriteLine(data.ToXml(new StringBuilder()));
-            dataOut.WriteLine(data.ToXml(new StringBuilder()));
-            dataOut.Flush();
+            if(data.ID.ToString() == "185" || data.ID.ToString() == "186")
+            {
+                StringBuilder output = new StringBuilder();
+                output.Append("{processId:'").Append(data.ProcessID)
+                    .Append("', threadId:'").Append(data.ThreadID)
+                    .Append("', function:'").Append(data.PayloadStringByName("InlinerName"))
+                    .Append("'},");
+
+                Out.WriteLine(output.ToString());
+                dataOut.WriteLine(output.ToString());
+                dataOut.Flush();
+            }
         }
 
         // Two Interface
